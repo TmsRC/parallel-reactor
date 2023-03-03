@@ -235,7 +235,7 @@ static void updateFuelAssembly(int dt, struct channel_struct * channel) {
  **/
 static void updateNeutronGenerator(int dt, struct channel_struct * channel, struct simulation_configuration_struct * configuration) {
   unsigned long int number_new_neutrons=getNumberNeutronsFromGenerator(channel->contents.neutron_generator.weight, dt);
-  for (int i=0;i<number_new_neutrons > 0;i++) {
+  for (int i=0;i<number_new_neutrons;i++) {
     if (currentNeutronIndex == 0) break;
     currentNeutronIndex--;
     unsigned long int index=neutron_index[currentNeutronIndex];
