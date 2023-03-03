@@ -35,7 +35,7 @@ static void updateFuelAssembly(int, struct channel_struct*);
 static void updateNeutronGenerator(int, struct channel_struct*, struct simulation_configuration_struct*);
 static void createNeutrons(int, struct channel_struct*, double);
 static void initialiseReactorCore(struct simulation_configuration_struct*);
-static void initialiseNeutrons();
+static void initialiseNeutrons(struct simulation_configuration_struct*);
 static double getControlRodLoweredToLevel(struct simulation_configuration_struct*, int, int);
 static void writeReactorState(struct simulation_configuration_struct*, int, char*);
 static void getFuelAssemblyChemicalContents(struct fuel_assembly_struct*, double*);
