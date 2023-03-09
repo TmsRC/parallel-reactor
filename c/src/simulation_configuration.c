@@ -135,7 +135,9 @@ static void setControlRodConfiguration(struct simulation_configuration_struct * 
       int size_diff2=equalsLocation-secondUnderScoreLocation;
       char x_channel[size_diff], y_channel[size_diff2];
       strncpy(x_channel, &underScoreLocation[1], size_diff-1);
+      x_channel[size_diff-1]='\0';
       strncpy(y_channel, &secondUnderScoreLocation[1], size_diff2-1);
+      y_channel[size_diff2-1]='\0';
       simulation_configuration->control_rod_configurations[simulation_configuration->num_ctrl_rod_configurations].x_channel=atoi(x_channel);
       simulation_configuration->control_rod_configurations[simulation_configuration->num_ctrl_rod_configurations].y_channel=atoi(y_channel);
       simulation_configuration->control_rod_configurations[simulation_configuration->num_ctrl_rod_configurations].percentage=getIntPercentValue(sourceString);
@@ -171,6 +173,10 @@ static void checkConfiguration(struct simulation_configuration_struct * simulati
         simulation_configuration->control_rod_configurations[i].percentage < 0) {
       fprintf(stderr, "Control rod at x=%d y=%d specified at percentage '%d' but this is an incorrect percentage out of 100\n",
         x_channel, y_channel, simulation_configuration->control_rod_configurations[i].percentage);
+      exit(-1);
+    }
+    if (x_channel == -1 || y_channel == -1) {
+      fprintf(stderr, "Active control rod configuration has x=%d y=%d where -1 is uninitialised\n", x_channel, y_channel);
       exit(-1);
     }
     if (simulation_configuration->channel_layout_config[x_channel] != NULL) {
@@ -221,6 +227,10 @@ static void initialiseSimulationConfiguration(struct simulation_configuration_st
   for (int i=0;i<MAX_CHANNEL_COLUMNS;i++) {
     simulation_configuration->channel_layout_config[i]=NULL;
     simulation_configuration->num_channel_configs[i]=0;
+  }
+  for (int i=0;i<MAX_CONTROL_RODS;i++) {
+    simulation_configuration->control_rod_configurations[i].x_channel=-1;
+    simulation_configuration->control_rod_configurations[i].y_channel=-1;
   }
   for (int i=0;i<NUM_CONFIG_CHEMICALS;i++) {
     simulation_configuration->fuel_makeup_percentage[i]=0;
