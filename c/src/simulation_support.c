@@ -60,7 +60,6 @@ static double getNumberAtomsInFuelPellet(struct channel_struct*, enum chemical_t
 static double getCrossSectionInBarns(double, enum chemical_type_enum);
 static int getAtomicRestMass(enum chemical_type_enum);
 static double calculateDeBroglieWavelength(double, int);
-static double getCrossSectionVolume(double, double, int);
 
 /**
  * Given the weight of a sample of Californium 252, will calculate how many
