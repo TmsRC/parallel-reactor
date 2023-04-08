@@ -1,0 +1,230 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  us/call  us/call  name    
+ 47.84      9.81     9.81                             updateNeutrons
+ 26.65     15.27     5.46 999000000     0.01     0.01  updateNeutronPosition
+ 13.91     18.12     2.85 999000000     0.00     0.00  MeVToVelocity
+  9.45     20.06     1.94 46672755     0.04     0.04  determineAndHandleIfNeutronFuelCollision
+  0.85     20.23     0.18     1000   175.12   175.12  getNumberNeutronsFromGenerator
+  0.44     20.32     0.09  5245594     0.02     0.02  generateNeutronVelocityAndEnergy
+  0.34     20.39     0.07                             getElapsedTime
+  0.29     20.45     0.06                             updateReactorCore
+  0.10     20.47     0.02  3401168     0.01     0.01  fissionU236
+  0.10     20.49     0.02   517530     0.04     0.04  determineAndHandleIfNeutronModeratorCollision
+  0.05     20.50     0.01                             getScatteringCrossSectionOfGraphite
+  0.05     20.51     0.01                             initialiseNeutrons
+  0.00     20.51     0.00  5245594     0.00     0.02  initialiseNeutron
+  0.00     20.51     0.00   517530     0.00     0.00  determineNeutronModeratorScattering
+  0.00     20.51     0.00   112000     0.00     0.00  getAtomsPerGram
+  0.00     20.51     0.00   112000     0.00     0.00  getChemicalAtIndex
+  0.00     20.51     0.00       18     0.00     0.00  getJoulesFromMeV
+  0.00     20.51     0.00       18     0.00     0.00  getMeVFromFissions
+  0.00     20.51     0.00        4     0.00     0.00  findControlRodConfiguration
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 2 byte(s) for 0.05% of 20.51 seconds
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]     97.9    9.81   10.27                 updateNeutrons [1]
+                5.46    2.85 999000000/999000000     updateNeutronPosition [2]
+                1.94    0.00 46672755/46672755     determineAndHandleIfNeutronFuelCollision [4]
+                0.02    0.00  517530/517530      determineAndHandleIfNeutronModeratorCollision [11]
+-----------------------------------------------
+                5.46    2.85 999000000/999000000     updateNeutrons [1]
+[2]     40.5    5.46    2.85 999000000         updateNeutronPosition [2]
+                2.85    0.00 999000000/999000000     MeVToVelocity [3]
+-----------------------------------------------
+                2.85    0.00 999000000/999000000     updateNeutronPosition [2]
+[3]     13.9    2.85    0.00 999000000         MeVToVelocity [3]
+-----------------------------------------------
+                1.94    0.00 46672755/46672755     updateNeutrons [1]
+[4]      9.4    1.94    0.00 46672755         determineAndHandleIfNeutronFuelCollision [4]
+-----------------------------------------------
+                                                 <spontaneous>
+[5]      1.7    0.06    0.29                 updateReactorCore [5]
+                0.18    0.00    1000/1000        getNumberNeutronsFromGenerator [6]
+                0.00    0.09 5245594/5245594     initialiseNeutron [8]
+                0.02    0.00 3401168/3401168     fissionU236 [10]
+-----------------------------------------------
+                0.18    0.00    1000/1000        updateReactorCore [5]
+[6]      0.9    0.18    0.00    1000         getNumberNeutronsFromGenerator [6]
+-----------------------------------------------
+                0.09    0.00 5245594/5245594     initialiseNeutron [8]
+[7]      0.4    0.09    0.00 5245594         generateNeutronVelocityAndEnergy [7]
+-----------------------------------------------
+                0.00    0.09 5245594/5245594     updateReactorCore [5]
+[8]      0.4    0.00    0.09 5245594         initialiseNeutron [8]
+                0.09    0.00 5245594/5245594     generateNeutronVelocityAndEnergy [7]
+-----------------------------------------------
+                                                 <spontaneous>
+[9]      0.3    0.07    0.00                 getElapsedTime [9]
+-----------------------------------------------
+                0.02    0.00 3401168/3401168     updateReactorCore [5]
+[10]     0.1    0.02    0.00 3401168         fissionU236 [10]
+-----------------------------------------------
+                0.02    0.00  517530/517530      updateNeutrons [1]
+[11]     0.1    0.02    0.00  517530         determineAndHandleIfNeutronModeratorCollision [11]
+                0.00    0.00  517530/517530      determineNeutronModeratorScattering [14]
+-----------------------------------------------
+                                                 <spontaneous>
+[12]     0.0    0.01    0.00                 getScatteringCrossSectionOfGraphite [12]
+-----------------------------------------------
+                                                 <spontaneous>
+[13]     0.0    0.01    0.00                 initialiseNeutrons [13]
+-----------------------------------------------
+                0.00    0.00  517530/517530      determineAndHandleIfNeutronModeratorCollision [11]
+[14]     0.0    0.00    0.00  517530         determineNeutronModeratorScattering [14]
+-----------------------------------------------
+                0.00    0.00  112000/112000      initialiseReactorCore [43]
+[15]     0.0    0.00    0.00  112000         getAtomsPerGram [15]
+-----------------------------------------------
+                0.00    0.00  112000/112000      initialiseReactorCore [43]
+[16]     0.0    0.00    0.00  112000         getChemicalAtIndex [16]
+-----------------------------------------------
+                0.00    0.00       9/18          generateReport [31]
+                0.00    0.00       9/18          writeReactorState [51]
+[17]     0.0    0.00    0.00      18         getJoulesFromMeV [17]
+-----------------------------------------------
+                0.00    0.00       9/18          generateReport [31]
+                0.00    0.00       9/18          writeReactorState [51]
+[18]     0.0    0.00    0.00      18         getMeVFromFissions [18]
+-----------------------------------------------
+                0.00    0.00       4/4           initialiseReactorCore [43]
+[19]     0.0    0.00    0.00       4         findControlRodConfiguration [19]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+   [3] MeVToVelocity          [15] getAtomsPerGram         [8] initialiseNeutron
+   [4] determineAndHandleIfNeutronFuelCollision [16] getChemicalAtIndex [13] initialiseNeutrons
+  [11] determineAndHandleIfNeutronModeratorCollision [9] getElapsedTime [2] updateNeutronPosition
+  [14] determineNeutronModeratorScattering [17] getJoulesFromMeV [1] updateNeutrons
+  [19] findControlRodConfiguration [18] getMeVFromFissions [5] updateReactorCore
+  [10] fissionU236             [6] getNumberNeutronsFromGenerator
+   [7] generateNeutronVelocityAndEnergy [12] getScatteringCrossSectionOfGraphite
