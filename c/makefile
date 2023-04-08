@@ -1,6 +1,6 @@
 SRC = src/simulation_configuration.c src/main.c src/simulation_support.c
 LFLAGS=-lm
-CFLAGS=-O3
+CFLAGS=-pg -O3
 
 .PHONY: archer2 local build
 
