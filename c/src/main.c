@@ -46,6 +46,9 @@ struct channel_struct **reactor_core;
 /*static*/ double getElapsedTime(struct timeval);
 
 void updateNeutronPosition(struct neutron_struct *neutron, int dt);
+void interactWithFuelAssembly(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, int i);
+void interactWithModerator(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, int i);
+void interactWithControlRod(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, int i);
 
 /**
  * Program entry point, this code is run with configuration file as command line argument
@@ -170,42 +173,17 @@ int main(int argc, char *argv[])
             {
                 if (reactorChannel->type == FUEL_ASSEMBLY)
                 {
-                    // It is in a fuel assembly channel, determine if it has collided with a neutron and if so deactivate it
-                    int fuel_pellet = (int)(neutrons[i].pos_z / HEIGHT_FUEL_PELLET_M);
-                    if (fuel_pellet < reactorChannel->contents.fuel_assembly.num_pellets)
-                    {
-                        bool collision = determineAndHandleIfNeutronFuelCollision(neutrons[i].energy, reactorChannel, fuel_pellet, configuration->collision_prob_multiplyer);
-                        if (collision)
-                        {
-                            neutrons[i].active = false;
-                            neutron_index[currentNeutronIndex] = i;
-                            currentNeutronIndex++;
-                        }
-                    }
+                    interactWithFuelAssembly(&neutrons[i],reactorChannel,configuration,i);
                 }
 
                 if (reactorChannel->type == MODERATOR)
                 {
-                    // The neutron is in the moderator, determine if it has been absorbed by the moderator or ot
-                    bool absorbed = determineAndHandleIfNeutronModeratorCollision(&neutrons[i], configuration->moderator_weight,
-                                                                                  reactorChannel->contents.moderator.type, configuration->size_z);
-                    if (absorbed)
-                    {
-                        neutrons[i].active = false;
-                        neutron_index[currentNeutronIndex] = i;
-                        currentNeutronIndex++;
-                    }
+                    interactWithModerator(&neutrons[i],reactorChannel,configuration,i);
                 }
 
                 if (reactorChannel->type == CONTROL_ROD)
                 {
-                    if (neutrons[i].pos_z <= reactorChannel->contents.control_rod.lowered_to_level)
-                    {
-                        // Has hit the control rod, therefore this absorbed and removed from simulation
-                        neutrons[i].active = false;
-                        neutron_index[currentNeutronIndex] = i;
-                        currentNeutronIndex++;
-                    }
+                    interactWithControlRod(&neutrons[i],reactorChannel,configuration,i);
                 }
             }
             else
@@ -564,5 +542,52 @@ void updateNeutronPosition(struct neutron_struct *neutron, int dt) {
     else
     {
         neutron->pos_z -= component_velocity_z;
+    }
+}
+
+
+
+/*
+ * These functions were separated only for profiling ends. The compiler is inlining them all (which is desirable) but for testing they will be kept as noinline
+ */
+
+void __attribute__ ((noinline)) interactWithFuelAssembly(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, int i) {
+
+    // It is in a fuel assembly channel, determine if it has collided with a neutron and if so deactivate it
+    int fuel_pellet = (int)(neutron->pos_z / HEIGHT_FUEL_PELLET_M);
+    if (fuel_pellet < reactorChannel->contents.fuel_assembly.num_pellets)
+    {
+        bool collision = determineAndHandleIfNeutronFuelCollision(neutron->energy, reactorChannel, fuel_pellet, configuration->collision_prob_multiplyer);
+        if (collision)
+        {
+            neutron->active = false;
+            neutron_index[currentNeutronIndex] = i;
+            currentNeutronIndex++;
+        }
+    }
+}
+
+
+void __attribute__ ((noinline)) interactWithModerator(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, int i) {
+    // The neutron is in the moderator, determine if it has been absorbed by the moderator or ot
+    bool absorbed = determineAndHandleIfNeutronModeratorCollision(neutron, configuration->moderator_weight,
+                                                                                  reactorChannel->contents.moderator.type, configuration->size_z);
+    if (absorbed)
+    {
+        neutrons->active = false;
+        neutron_index[currentNeutronIndex] = i;
+        currentNeutronIndex++;
+    }
+}
+
+
+void __attribute__ ((noinline)) interactWithControlRod(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, int i) {
+
+    if (neutron->pos_z <= reactorChannel->contents.control_rod.lowered_to_level)
+    {
+        // Has hit the control rod, therefore this absorbed and removed from simulation
+        neutron->active = false;
+        neutron_index[currentNeutronIndex] = i;
+        currentNeutronIndex++;
     }
 }
