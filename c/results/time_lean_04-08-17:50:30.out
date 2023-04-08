@@ -1,0 +1,16 @@
+Simulation configured for reactor core of size 1m by 1m by 1m, timesteps=1000 dt=10ns
+------------------------------------------------------------------------------------------------
+Timestep: 100, model time is 1.000000e-06 secs, current runtime is 4.96 seconds. 999999 active neutrons, 331100 fissions, releasing 6.622000e+07 MeV and 1.059520e-05 Joules
+Timestep: 200, model time is 2.000000e-06 secs, current runtime is 9.79 seconds. 999999 active neutrons, 676319 fissions, releasing 1.352638e+08 MeV and 2.164221e-05 Joules
+Timestep: 300, model time is 3.000000e-06 secs, current runtime is 14.66 seconds. 999999 active neutrons, 1022679 fissions, releasing 2.045358e+08 MeV and 3.272573e-05 Joules
+Timestep: 400, model time is 4.000000e-06 secs, current runtime is 19.46 seconds. 999999 active neutrons, 1367264 fissions, releasing 2.734528e+08 MeV and 4.375245e-05 Joules
+Timestep: 500, model time is 5.000000e-06 secs, current runtime is 24.26 seconds. 999999 active neutrons, 1713227 fissions, releasing 3.426454e+08 MeV and 5.482326e-05 Joules
+Timestep: 600, model time is 6.000000e-06 secs, current runtime is 29.06 seconds. 999999 active neutrons, 2058182 fissions, releasing 4.116364e+08 MeV and 6.586182e-05 Joules
+Timestep: 700, model time is 7.000000e-06 secs, current runtime is 33.87 seconds. 999999 active neutrons, 2404580 fissions, releasing 4.809160e+08 MeV and 7.694656e-05 Joules
+Timestep: 800, model time is 8.000000e-06 secs, current runtime is 38.66 seconds. 999999 active neutrons, 2750894 fissions, releasing 5.501788e+08 MeV and 8.802861e-05 Joules
+Timestep: 900, model time is 9.000000e-06 secs, current runtime is 43.45 seconds. 999999 active neutrons, 3096289 fissions, releasing 6.192578e+08 MeV and 9.908125e-05 Joules
+------------------------------------------------------------------------------------------------
+Model completed after 1000 timesteps
+Total model time: 0.000010 secs
+Total fissions: 3439380 releasing 6.878760e+08 MeV and 1.100602e-04 Joules
+Total runtime: 48.19 seconds
