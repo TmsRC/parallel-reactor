@@ -27,23 +27,23 @@ unsigned long int currentNeutronIndex = 0;
 // The reactor core itself, each are channels in the x and y dimensions
 struct channel_struct **reactor_core;
 
-static void step(int, struct simulation_configuration_struct *);
-static void generateReport(int, int, struct simulation_configuration_struct *, struct timeval);
-static void updateReactorCore(int, struct simulation_configuration_struct *);
-static void updateNeutrons(int, struct simulation_configuration_struct *);
-static void updateFuelAssembly(int, struct channel_struct *);
-static void updateNeutronGenerator(int, struct channel_struct *, struct simulation_configuration_struct *);
-static void createNeutrons(int, struct channel_struct *, double);
-static void initialiseReactorCore(struct simulation_configuration_struct *);
-static void initialiseNeutrons(struct simulation_configuration_struct *);
-static double getControlRodLoweredToLevel(struct simulation_configuration_struct *, int, int);
-static void writeReactorState(struct simulation_configuration_struct *, int, char *);
-static void getFuelAssemblyChemicalContents(struct fuel_assembly_struct *, double *);
-static void clearReactorStateFile(char *);
-static struct channel_struct *locateChannelFromPosition(double, double, struct simulation_configuration_struct *);
-static unsigned long int getTotalNumberFissions(struct simulation_configuration_struct *);
-static unsigned long int getNumberActiveNeutrons(struct simulation_configuration_struct *);
-static double getElapsedTime(struct timeval);
+/*static*/ void step(int, struct simulation_configuration_struct *);
+/*static*/ void generateReport(int, int, struct simulation_configuration_struct *, struct timeval);
+/*static*/ void updateReactorCore(int, struct simulation_configuration_struct *);
+/*static*/ void updateNeutrons(int, struct simulation_configuration_struct *);
+/*static*/ void updateFuelAssembly(int, struct channel_struct *);
+/*static*/ void updateNeutronGenerator(int, struct channel_struct *, struct simulation_configuration_struct *);
+/*static*/ void createNeutrons(int, struct channel_struct *, double);
+/*static*/ void initialiseReactorCore(struct simulation_configuration_struct *);
+/*static*/ void initialiseNeutrons(struct simulation_configuration_struct *);
+/*static*/ double getControlRodLoweredToLevel(struct simulation_configuration_struct *, int, int);
+/*static*/ void writeReactorState(struct simulation_configuration_struct *, int, char *);
+/*static*/ void getFuelAssemblyChemicalContents(struct fuel_assembly_struct *, double *);
+/*static*/ void clearReactorStateFile(char *);
+/*static*/ struct channel_struct *locateChannelFromPosition(double, double, struct simulation_configuration_struct *);
+/*static*/ unsigned long int getTotalNumberFissions(struct simulation_configuration_struct *);
+/*static*/ unsigned long int getNumberActiveNeutrons(struct simulation_configuration_struct *);
+/*static*/ double getElapsedTime(struct timeval);
 
 /**
  * Program entry point, this code is run with configuration file as command line argument
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 /**
  * Undertake a single timestep of processing
  **/
-static void step(int dt, struct simulation_configuration_struct *configuration)
+/*static*/ void step(int dt, struct simulation_configuration_struct *configuration)
 {
     updateNeutrons(dt, configuration);
     updateReactorCore(dt, configuration);
@@ -105,7 +105,7 @@ static void step(int dt, struct simulation_configuration_struct *configuration)
 /**
  * Writes a short report around the current state of the simulation to stdout
  **/
-static void generateReport(int dt, int timestep, struct simulation_configuration_struct *configuration, struct timeval start_time)
+/*static*/ void generateReport(int dt, int timestep, struct simulation_configuration_struct *configuration, struct timeval start_time)
 {
     unsigned long int num_fissions = getTotalNumberFissions(configuration);
     double mev = getMeVFromFissions(num_fissions);
@@ -118,7 +118,7 @@ static void generateReport(int dt, int timestep, struct simulation_configuration
  * Update the state of the reactor core at the current timestep, which will update the state
  * of each fuel assembly and neutron generator.
  **/
-static void updateReactorCore(int dt, struct simulation_configuration_struct *configuration)
+/*static*/ void updateReactorCore(int dt, struct simulation_configuration_struct *configuration)
 {
     for (int i = 0; i < configuration->channels_x; i++)
     {
@@ -142,7 +142,7 @@ static void updateReactorCore(int dt, struct simulation_configuration_struct *co
  * components and energy, and then handling the collision of the neutron with a fuel channel,
  * moderator, or control rod
  **/
-static void updateNeutrons(int dt, struct simulation_configuration_struct *configuration)
+/*static*/ void updateNeutrons(int dt, struct simulation_configuration_struct *configuration)
 {
     for (long int i = 0; i < configuration->max_neutrons; i++)
     {
@@ -247,7 +247,7 @@ static void updateNeutrons(int dt, struct simulation_configuration_struct *confi
  * Update the state of a specific fuel assembly in a channel for a timestep. This will fission all U236
  * and Pu239 in the assembly and update the constituent components as required
  **/
-static void updateFuelAssembly(int dt, struct channel_struct *channel)
+/*static*/ void updateFuelAssembly(int dt, struct channel_struct *channel)
 {
     for (int i = 0; i < channel->contents.fuel_assembly.num_pellets; i++)
     {
@@ -272,7 +272,7 @@ static void updateFuelAssembly(int dt, struct channel_struct *channel)
  * Update the state of a neutron generator for a timestep, generating the required
  * number of neutrons
  **/
-static void updateNeutronGenerator(int dt, struct channel_struct *channel, struct simulation_configuration_struct *configuration)
+/*static*/ void updateNeutronGenerator(int dt, struct channel_struct *channel, struct simulation_configuration_struct *configuration)
 {
     unsigned long int number_new_neutrons = getNumberNeutronsFromGenerator(channel->contents.neutron_generator.weight, dt);
     for (int i = 0; i < number_new_neutrons; i++)
@@ -289,7 +289,7 @@ static void updateNeutronGenerator(int dt, struct channel_struct *channel, struc
  * Creates a specific number of neutrons that originate in a specific reactor channel
  * at a specific height (z) location
  **/
-static void createNeutrons(int num_neutrons, struct channel_struct *channel, double z)
+/*static*/ void createNeutrons(int num_neutrons, struct channel_struct *channel, double z)
 {
     for (int k = 0; k < num_neutrons; k++)
     {
@@ -304,7 +304,7 @@ static void createNeutrons(int num_neutrons, struct channel_struct *channel, dou
 /**
  * Initialises the reactor core at the start of the simulation from the configuration
  **/
-static void initialiseReactorCore(struct simulation_configuration_struct *simulation_configuration)
+/*static*/ void initialiseReactorCore(struct simulation_configuration_struct *simulation_configuration)
 {
     reactor_core = (struct channel_struct **)malloc(sizeof(struct channel_struct *) * simulation_configuration->channels_x);
     for (int i = 0; i < simulation_configuration->channels_x; i++)
@@ -414,7 +414,7 @@ static void initialiseReactorCore(struct simulation_configuration_struct *simula
  * is read and currentNeutronIndex decremented. When deactivating a neutron the index of the newly freed
  * location is added to the next element of neutron_index and currentNeutronIndex is incremented
  **/
-static void initialiseNeutrons(struct simulation_configuration_struct *simulation_configuration)
+/*static*/ void initialiseNeutrons(struct simulation_configuration_struct *simulation_configuration)
 {
     neutrons = (struct neutron_struct *)malloc(sizeof(struct neutron_struct) * simulation_configuration->max_neutrons);
     neutron_index = (unsigned long int *)malloc(sizeof(unsigned long int) * simulation_configuration->max_neutrons);
@@ -430,7 +430,7 @@ static void initialiseNeutrons(struct simulation_configuration_struct *simulatio
  * For a control rod channel will return the absolute z height position that this has been lowered to based upon
  * the percentage insertion that was configured
  **/
-static double getControlRodLoweredToLevel(struct simulation_configuration_struct *simulation_configuration, int channel_x, int channel_y)
+/*static*/ double getControlRodLoweredToLevel(struct simulation_configuration_struct *simulation_configuration, int channel_x, int channel_y)
 {
     int rodConfigurationIndex = findControlRodConfiguration(simulation_configuration, channel_x, channel_y);
     if (rodConfigurationIndex < 0)
@@ -444,7 +444,7 @@ static double getControlRodLoweredToLevel(struct simulation_configuration_struct
 /**
  * Writes out the current state of the reactor at this timestep to a file
  **/
-static void writeReactorState(struct simulation_configuration_struct *configuration, int timestep, char *outfile)
+/*static*/ void writeReactorState(struct simulation_configuration_struct *configuration, int timestep, char *outfile)
 {
     unsigned long int num_fissions = getTotalNumberFissions(configuration);
     double mev = getMeVFromFissions(num_fissions);
@@ -473,7 +473,7 @@ static void writeReactorState(struct simulation_configuration_struct *configurat
  * Retrieves the quantities of atoms in a fuel assembly across all the pellets for
  * each chemical that will be written out to the file
  **/
-static void getFuelAssemblyChemicalContents(struct fuel_assembly_struct *fuel_rod, double *amounts)
+/*static*/ void getFuelAssemblyChemicalContents(struct fuel_assembly_struct *fuel_rod, double *amounts)
 {
     for (int i = 0; i < 11; i++)
         amounts[i] = 0;
@@ -490,7 +490,7 @@ static void getFuelAssemblyChemicalContents(struct fuel_assembly_struct *fuel_ro
  * Clears out the file that we are going to write to for the reactor state, this is called at simulation
  * startup and it will overwrite any existing contents
  **/
-static void clearReactorStateFile(char *outfile)
+/*static*/ void clearReactorStateFile(char *outfile)
 {
     FILE *f = fopen(outfile, "w");
     fclose(f);
@@ -500,7 +500,7 @@ static void clearReactorStateFile(char *outfile)
  * Given an x and y position in the reactor core this will locate the channel
  * that that corresponds to
  **/
-static struct channel_struct *locateChannelFromPosition(double x, double y, struct simulation_configuration_struct *configuration)
+/*static*/ struct channel_struct *locateChannelFromPosition(double x, double y, struct simulation_configuration_struct *configuration)
 {
     if (x > configuration->size_x || x < 0.0)
         return NULL;
@@ -515,7 +515,7 @@ static struct channel_struct *locateChannelFromPosition(double x, double y, stru
  * Based upon the properties of each fuel assembly will return the total number of fissions
  *  that have occured across all fuel assemblies in the simulation.
  **/
-static unsigned long int getTotalNumberFissions(struct simulation_configuration_struct *configuration)
+/*static*/ unsigned long int getTotalNumberFissions(struct simulation_configuration_struct *configuration)
 {
     unsigned long int total_fissions = 0;
     for (int i = 0; i < configuration->channels_x; i++)
@@ -534,7 +534,7 @@ static unsigned long int getTotalNumberFissions(struct simulation_configuration_
 /**
  * Determines the number of currently active neutrons in the simulation
  **/
-static unsigned long int getNumberActiveNeutrons(struct simulation_configuration_struct *configuration)
+/*static*/ unsigned long int getNumberActiveNeutrons(struct simulation_configuration_struct *configuration)
 {
     unsigned long int activeNeutrons = 0;
     for (unsigned long int i = 0; i < configuration->max_neutrons; i++)
@@ -548,7 +548,7 @@ static unsigned long int getNumberActiveNeutrons(struct simulation_configuration
 /**
  * Returns in seconds the elapsed time since the start_time argument and now
  **/
-static double getElapsedTime(struct timeval start_time)
+/*static*/ double getElapsedTime(struct timeval start_time)
 {
     struct timeval curr_time;
     gettimeofday(&curr_time, NULL);

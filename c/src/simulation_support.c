@@ -47,19 +47,19 @@
 // Newton meters per electron volt
 #define NEWTON_METER_PER_eV (1.60217733 * 1e-19)
 
-static bool determineNeutronModeratorScattering(int, enum moderator_type_enum, int);
-static double getScatteringCrossSection(enum chemical_type_enum);
-static double getScatteringCrossSectionOfWater();
-static double getScatteringCrossSectionOfDeuterium();
-static double getScatteringCrossSectionOfGraphite();
-static void generateNeutronVelocityAndEnergy(struct neutron_struct *);
-static bool determineNeutronAbsorbtionByFuel(double, struct channel_struct *, enum chemical_type_enum, int, int);
-static double generateDecimalRandomNumber();
-static double getRandomNumberGeneratorResolution();
-static double getNumberAtomsInFuelPellet(struct channel_struct *, enum chemical_type_enum, int);
-static double getCrossSectionInBarns(double, enum chemical_type_enum);
-static int getAtomicRestMass(enum chemical_type_enum);
-static double calculateDeBroglieWavelength(double, int);
+/*static*/ bool determineNeutronModeratorScattering(int, enum moderator_type_enum, int);
+/*static*/ double getScatteringCrossSection(enum chemical_type_enum);
+/*static*/ double getScatteringCrossSectionOfWater();
+/*static*/ double getScatteringCrossSectionOfDeuterium();
+/*static*/ double getScatteringCrossSectionOfGraphite();
+/*static*/ void generateNeutronVelocityAndEnergy(struct neutron_struct *);
+/*static*/ bool determineNeutronAbsorbtionByFuel(double, struct channel_struct *, enum chemical_type_enum, int, int);
+/*static*/ double generateDecimalRandomNumber();
+/*static*/ double getRandomNumberGeneratorResolution();
+/*static*/ double getNumberAtomsInFuelPellet(struct channel_struct *, enum chemical_type_enum, int);
+/*static*/ double getCrossSectionInBarns(double, enum chemical_type_enum);
+/*static*/ int getAtomicRestMass(enum chemical_type_enum);
+/*static*/ double calculateDeBroglieWavelength(double, int);
 
 /**
  * Given the weight of a sample of Californium 252, will calculate how many
@@ -292,7 +292,7 @@ enum chemical_type_enum getChemicalAtIndex(int index)
  * is moving through the moderator so will likely come into contact with them in the other dimension anyway
  * in a timestep, so that is likely reasonable and it keeps things simpler too
  **/
-static bool determineNeutronModeratorScattering(int moderator_weight, enum moderator_type_enum moderator_type, int size_z)
+/*static*/ bool determineNeutronModeratorScattering(int moderator_weight, enum moderator_type_enum moderator_type, int size_z)
 {
     enum chemical_type_enum moderator_chemical;
     if (moderator_type == WATER)
@@ -324,7 +324,7 @@ static bool determineNeutronModeratorScattering(int moderator_weight, enum moder
  * cross section constants that assume 1eV of energy of the neutron, which is
  * a simplification but it keeps the maths simpler
  **/
-static double getScatteringCrossSection(enum chemical_type_enum chemical)
+/*static*/ double getScatteringCrossSection(enum chemical_type_enum chemical)
 {
     if (chemical == H2O)
     {
@@ -344,7 +344,7 @@ static double getScatteringCrossSection(enum chemical_type_enum chemical)
 /**
  * Get the scattering cross section of water (H2O)
  **/
-static double getScatteringCrossSectionOfWater()
+/*static*/ double getScatteringCrossSectionOfWater()
 {
     int rest_mass = getAtomicRestMass(H2O);
     double n = (AVOGADRO / rest_mass) * DENSITY_WATER;
@@ -354,7 +354,7 @@ static double getScatteringCrossSectionOfWater()
 /**
  * Get the scattering cross section of duterium (D2O)
  **/
-static double getScatteringCrossSectionOfDeuterium()
+/*static*/ double getScatteringCrossSectionOfDeuterium()
 {
     int rest_mass = getAtomicRestMass(D2O);
     double n = (AVOGADRO / rest_mass) * DENSITY_DEUTERIUM;
@@ -364,7 +364,7 @@ static double getScatteringCrossSectionOfDeuterium()
 /**
  * Get the scattering cross section of graphite (C6)
  **/
-static double getScatteringCrossSectionOfGraphite()
+/*static*/ double getScatteringCrossSectionOfGraphite()
 {
     int rest_mass = getAtomicRestMass(C6);
     double n = (AVOGADRO / rest_mass) * DENSITY_GRAPHITE;
@@ -376,7 +376,7 @@ static double getScatteringCrossSectionOfGraphite()
  * MeV and the velocity components (which add up to 100 across the
  * three dimensions) that the velocity will be shared over.
  **/
-static void generateNeutronVelocityAndEnergy(struct neutron_struct *neutron)
+/*static*/ void generateNeutronVelocityAndEnergy(struct neutron_struct *neutron)
 {
     int sum = 0;
     int x, y, z;
@@ -410,8 +410,8 @@ static void generateNeutronVelocityAndEnergy(struct neutron_struct *neutron)
  * into contact with them in the other dimension anyway
  * in a timestep, so that is likely reasonable and it keeps things simpler too
  **/
-static bool determineNeutronAbsorbtionByFuel(double deBroglieWavelength, struct channel_struct *reactor_channel,
-                                             enum chemical_type_enum chemical, int fuel_pellet, int collision_prob_multiplyer)
+/*static*/ bool determineNeutronAbsorbtionByFuel(double deBroglieWavelength, struct channel_struct *reactor_channel,
+                                                 enum chemical_type_enum chemical, int fuel_pellet, int collision_prob_multiplyer)
 {
     // First get the cross section in Barns for the chemical
     double cs = getCrossSectionInBarns(deBroglieWavelength, chemical);
@@ -434,7 +434,7 @@ static bool determineNeutronAbsorbtionByFuel(double deBroglieWavelength, struct 
 /**
  * Generates a random number between 0 and 1
  **/
-static double generateDecimalRandomNumber()
+/*static*/ double generateDecimalRandomNumber()
 {
     return ((double)rand()) / RAND_MAX;
 }
@@ -444,7 +444,7 @@ static double generateDecimalRandomNumber()
  * when generating a random number between 0 and 1, as we might be comparing
  * against something that's so small it will never be chosen
  **/
-static double getRandomNumberGeneratorResolution()
+/*static*/ double getRandomNumberGeneratorResolution()
 {
     return 1.0 / RAND_MAX;
 }
@@ -453,8 +453,8 @@ static double getRandomNumberGeneratorResolution()
  * Retrieves the number of atoms of a chemical in a specific pellet of the fuel
  * held in the given reactor channel
  **/
-static double getNumberAtomsInFuelPellet(struct channel_struct *reactor_channel,
-                                         enum chemical_type_enum chemical, int fuel_pellet)
+/*static*/ double getNumberAtomsInFuelPellet(struct channel_struct *reactor_channel,
+                                             enum chemical_type_enum chemical, int fuel_pellet)
 {
     return reactor_channel->contents.fuel_assembly.quantities[fuel_pellet][chemical];
 }
@@ -463,7 +463,7 @@ static double getNumberAtomsInFuelPellet(struct channel_struct *reactor_channel,
  * Based upon a collision with a chemical, will calculate the cross section in Barnes from the
  * deBroglie wavelength that has been provided. 1 barn is 1e-28 meters squared.
  **/
-static double getCrossSectionInBarns(double deBroglieWavelength, enum chemical_type_enum chemical)
+/*static*/ double getCrossSectionInBarns(double deBroglieWavelength, enum chemical_type_enum chemical)
 {
     int rest_mass = getAtomicRestMass(chemical);
     if (rest_mass == 0)
@@ -479,7 +479,7 @@ static double getCrossSectionInBarns(double deBroglieWavelength, enum chemical_t
 /**
  * Returns the atomic rest mass of a chemical
  **/
-static int getAtomicRestMass(enum chemical_type_enum chemical)
+/*static*/ int getAtomicRestMass(enum chemical_type_enum chemical)
 {
     if (chemical == U235)
         return 235;
@@ -516,7 +516,7 @@ static int getAtomicRestMass(enum chemical_type_enum chemical)
  * From the energy (in MeV) and atomic rest mass will calculate the
  * deBroglie wavelength
  **/
-static double calculateDeBroglieWavelength(double MeV, int rest_mass)
+/*static*/ double calculateDeBroglieWavelength(double MeV, int rest_mass)
 {
     double mass = rest_mass * MASS_ONE_UNIT;
     double ke = MeV * 1e6 * NEWTON_METER_PER_eV;
