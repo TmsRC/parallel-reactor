@@ -45,6 +45,8 @@ struct channel_struct **reactor_core;
 /*static*/ unsigned long int getNumberActiveNeutrons(struct simulation_configuration_struct *);
 /*static*/ double getElapsedTime(struct timeval);
 
+void updateNeutronPosition(struct neutron_struct *neutron, int dt);
+
 /**
  * Program entry point, this code is run with configuration file as command line argument
  **/
@@ -148,36 +150,8 @@ int main(int argc, char *argv[])
     {
         if (neutrons[i].active)
         {
-            // Rest mass is 1 for a neutron
-            double total_velocity = MeVToVelocity(neutrons[i].energy, 1);
-            // These components are positive or negative which denote movement in one direction or another
-            double component_velocity_x = ((abs(neutrons[i].x) / 100.0) * total_velocity) * NS_AS_SEC * dt;
-            double component_velocity_y = ((abs(neutrons[i].y) / 100.0) * total_velocity) * NS_AS_SEC * dt;
-            double component_velocity_z = ((abs(neutrons[i].z) / 100.0) * total_velocity) * NS_AS_SEC * dt;
-            if (neutrons[i].x > 0)
-            {
-                neutrons[i].pos_x += component_velocity_x;
-            }
-            else
-            {
-                neutrons[i].pos_x -= component_velocity_x;
-            }
-            if (neutrons[i].y > 0)
-            {
-                neutrons[i].pos_y += component_velocity_y;
-            }
-            else
-            {
-                neutrons[i].pos_y -= component_velocity_y;
-            }
-            if (neutrons[i].z > 0)
-            {
-                neutrons[i].pos_z += component_velocity_z;
-            }
-            else
-            {
-                neutrons[i].pos_z -= component_velocity_z;
-            }
+
+            updateNeutronPosition(&neutrons[i],dt);
 
             if (neutrons[i].pos_x > configuration->size_x || neutrons[i].pos_x < 0.0 ||
                 neutrons[i].pos_y > configuration->size_y || neutrons[i].pos_y < 0.0 ||
@@ -554,4 +528,41 @@ int main(int argc, char *argv[])
     gettimeofday(&curr_time, NULL);
     long int elapsedtime = (curr_time.tv_sec * 1000000 + curr_time.tv_usec) - (start_time.tv_sec * 1000000 + start_time.tv_usec);
     return elapsedtime / 1000000.0;
+}
+
+
+
+
+void updateNeutronPosition(struct neutron_struct *neutron, int dt) {
+
+     // Rest mass is 1 for a neutron
+    double total_velocity = MeVToVelocity(neutron->energy, 1);
+    // These components are positive or negative which denote movement in one direction or another
+    double component_velocity_x = ((abs(neutron->x) / 100.0) * total_velocity) * NS_AS_SEC * dt;
+    double component_velocity_y = ((abs(neutron->y) / 100.0) * total_velocity) * NS_AS_SEC * dt;
+    double component_velocity_z = ((abs(neutron->z) / 100.0) * total_velocity) * NS_AS_SEC * dt;
+    if (neutron->x > 0)
+    {
+        neutron->pos_x += component_velocity_x;
+    }
+    else
+    {
+        neutron->pos_x -= component_velocity_x;
+    }
+    if (neutron->y > 0)
+    {
+        neutron->pos_y += component_velocity_y;
+    }
+    else
+    {
+        neutron->pos_y -= component_velocity_y;
+    }
+    if (neutron->z > 0)
+    {
+        neutron->pos_z += component_velocity_z;
+    }
+    else
+    {
+        neutron->pos_z -= component_velocity_z;
+    }
 }
