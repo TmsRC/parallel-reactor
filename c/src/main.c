@@ -49,6 +49,7 @@ void updateNeutronPosition(struct neutron_struct *neutron, int dt);
 void interactWithFuelAssembly(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i);
 void interactWithModerator(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i);
 void interactWithControlRod(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i);
+void interactWithReactor(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i);
 
 /**
  * Program entry point, this code is run with configuration file as command line argument
@@ -171,20 +172,7 @@ int main(int argc, char *argv[])
             struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[i].pos_x, neutrons[i].pos_y, configuration);
             if (reactorChannel != NULL)
             {
-                if (reactorChannel->type == FUEL_ASSEMBLY)
-                {
-                    interactWithFuelAssembly(&neutrons[i],reactorChannel,configuration,i);
-                }
-
-                if (reactorChannel->type == MODERATOR)
-                {
-                    interactWithModerator(&neutrons[i],reactorChannel,configuration,i);
-                }
-
-                if (reactorChannel->type == CONTROL_ROD)
-                {
-                    interactWithControlRod(&neutrons[i],reactorChannel,configuration,i);
-                }
+                interactWithReactor(&neutrons[i],reactorChannel,configuration,i);
             }
             else
             {
@@ -571,4 +559,24 @@ void __attribute__ ((noinline)) interactWithControlRod(struct neutron_struct *ne
         neutron_index[currentNeutronIndex] = i;
         currentNeutronIndex++;
     }
+}
+
+
+void __attribute__ ((noinline)) interactWithReactor(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i) {
+
+    if (reactorChannel->type == FUEL_ASSEMBLY)
+    {
+        interactWithFuelAssembly(neutron,reactorChannel,configuration,i);
+    }
+
+    if (reactorChannel->type == MODERATOR)
+    {
+        interactWithModerator(neutron,reactorChannel,configuration,i);
+    }
+
+    if (reactorChannel->type == CONTROL_ROD)
+    {
+        interactWithControlRod(neutron,reactorChannel,configuration,i);
+    }
+
 }
