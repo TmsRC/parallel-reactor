@@ -46,9 +46,9 @@ struct channel_struct **reactor_core;
 /*static*/ double getElapsedTime(struct timeval);
 
 void updateNeutronPosition(struct neutron_struct *neutron, int dt);
-void interactWithFuelAssembly(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, int i);
-void interactWithModerator(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, int i);
-void interactWithControlRod(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, int i);
+void interactWithFuelAssembly(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i);
+void interactWithModerator(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i);
+void interactWithControlRod(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i);
 
 /**
  * Program entry point, this code is run with configuration file as command line argument
@@ -551,7 +551,7 @@ void updateNeutronPosition(struct neutron_struct *neutron, int dt) {
  * These functions were separated only for profiling ends. The compiler is inlining them all (which is desirable) but for testing they will be kept as noinline
  */
 
-void __attribute__ ((noinline)) interactWithFuelAssembly(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, int i) {
+void __attribute__ ((noinline)) interactWithFuelAssembly(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i) {
 
     // It is in a fuel assembly channel, determine if it has collided with a neutron and if so deactivate it
     int fuel_pellet = (int)(neutron->pos_z / HEIGHT_FUEL_PELLET_M);
@@ -568,7 +568,7 @@ void __attribute__ ((noinline)) interactWithFuelAssembly(struct neutron_struct *
 }
 
 
-void __attribute__ ((noinline)) interactWithModerator(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, int i) {
+void __attribute__ ((noinline)) interactWithModerator(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i) {
     // The neutron is in the moderator, determine if it has been absorbed by the moderator or ot
     bool absorbed = determineAndHandleIfNeutronModeratorCollision(neutron, configuration->moderator_weight,
                                                                                   reactorChannel->contents.moderator.type, configuration->size_z);
@@ -581,7 +581,7 @@ void __attribute__ ((noinline)) interactWithModerator(struct neutron_struct *neu
 }
 
 
-void __attribute__ ((noinline)) interactWithControlRod(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, int i) {
+void __attribute__ ((noinline)) interactWithControlRod(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i) {
 
     if (neutron->pos_z <= reactorChannel->contents.control_rod.lowered_to_level)
     {
