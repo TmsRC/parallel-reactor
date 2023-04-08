@@ -511,38 +511,19 @@ int main(int argc, char *argv[])
 
 
 
-void updateNeutronPosition(struct neutron_struct *neutron, int dt) {
+void __attribute__ ((noinline)) updateNeutronPosition(struct neutron_struct *neutron, int dt) {
 
      // Rest mass is 1 for a neutron
     double total_velocity = MeVToVelocity(neutron->energy, 1);
     // These components are positive or negative which denote movement in one direction or another
-    double component_velocity_x = ((abs(neutron->x) / 100.0) * total_velocity) * NS_AS_SEC * dt;
-    double component_velocity_y = ((abs(neutron->y) / 100.0) * total_velocity) * NS_AS_SEC * dt;
-    double component_velocity_z = ((abs(neutron->z) / 100.0) * total_velocity) * NS_AS_SEC * dt;
-    if (neutron->x > 0)
-    {
-        neutron->pos_x += component_velocity_x;
-    }
-    else
-    {
-        neutron->pos_x -= component_velocity_x;
-    }
-    if (neutron->y > 0)
-    {
-        neutron->pos_y += component_velocity_y;
-    }
-    else
-    {
-        neutron->pos_y -= component_velocity_y;
-    }
-    if (neutron->z > 0)
-    {
-        neutron->pos_z += component_velocity_z;
-    }
-    else
-    {
-        neutron->pos_z -= component_velocity_z;
-    }
+    double component_velocity_x = (( neutron->x / 100.0) * total_velocity) * NS_AS_SEC * dt;
+    double component_velocity_y = (( neutron->y / 100.0) * total_velocity) * NS_AS_SEC * dt;
+    double component_velocity_z = (( neutron->z / 100.0) * total_velocity) * NS_AS_SEC * dt;
+
+    neutron->pos_x += component_velocity_x;
+    neutron->pos_y += component_velocity_y;
+    neutron->pos_z += component_velocity_z;
+
 }
 
 
