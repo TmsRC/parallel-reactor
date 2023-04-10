@@ -4,10 +4,10 @@ CFLAGS=-pg -O3
 
 .PHONY: archer2 local build
 
-archer2: CC=cc
-archer2: build
+#archer2: CC=mpicc
+#archer2: build
 
-cirrus: CC=gcc
+cirrus: CC=mpicc
 cirrus: build
 
 build: 
