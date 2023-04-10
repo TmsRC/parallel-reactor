@@ -50,6 +50,8 @@ void interactWithFuelAssembly(struct neutron_struct *neutron, struct channel_str
 void interactWithModerator(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i);
 void interactWithControlRod(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i);
 void interactWithReactor(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i);
+bool determineOutbound(struct neutron_struct *neutron, struct simulation_configuration_struct *configuration, long int i);
+
 
 /**
  * Program entry point, this code is run with configuration file as command line argument
@@ -157,14 +159,9 @@ int main(int argc, char *argv[])
 
             updateNeutronPosition(&neutrons[i],dt);
 
-            if (neutrons[i].pos_x > configuration->size_x || neutrons[i].pos_x < 0.0 ||
-                neutrons[i].pos_y > configuration->size_y || neutrons[i].pos_y < 0.0 ||
-                neutrons[i].pos_z > configuration->size_z || neutrons[i].pos_z < 0.0)
+            bool outbound = determineOutbound(&neutrons[i],configuration,i);
+            if (outbound)
             {
-                // Moved out of the reactor core, so deactivate the neutron
-                neutrons[i].active = false;
-                neutron_index[currentNeutronIndex] = i;
-                currentNeutronIndex++;
                 continue;
             }
 
@@ -579,4 +576,20 @@ void __attribute__ ((noinline)) interactWithReactor(struct neutron_struct *neutr
         interactWithControlRod(neutron,reactorChannel,configuration,i);
     }
 
+}
+
+bool __attribute__ ((noinline)) determineOutbound(struct neutron_struct *neutron, struct simulation_configuration_struct *configuration, long int i) {
+
+    bool outbound = neutron->pos_x > configuration->size_x || neutron->pos_x < 0.0 ||
+           neutron->pos_y > configuration->size_y || neutron->pos_y < 0.0 ||
+           neutron->pos_z > configuration->size_z || neutron->pos_z < 0.0 ;
+
+    if(outbound) {
+        // Moved out of the reactor core, so deactivate the neutron
+        neutron->active = false;
+        neutron_index[currentNeutronIndex] = i;
+        currentNeutronIndex++;
+    }
+
+    return outbound;
 }
