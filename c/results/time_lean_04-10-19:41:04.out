@@ -1,0 +1,16 @@
+Simulation configured for reactor core of size 1m by 1m by 1m, timesteps=1000 dt=10ns
+------------------------------------------------------------------------------------------------
+Timestep: 100, model time is 1.000000e-06 secs, current runtime is 7.41 seconds. 999999 active neutrons, 337226 fissions, releasing 6.744520e+07 MeV and 1.079123e-05 Joules
+Timestep: 200, model time is 2.000000e-06 secs, current runtime is 14.68 seconds. 999999 active neutrons, 689135 fissions, releasing 1.378270e+08 MeV and 2.205232e-05 Joules
+Timestep: 300, model time is 3.000000e-06 secs, current runtime is 21.95 seconds. 999999 active neutrons, 1040250 fissions, releasing 2.080500e+08 MeV and 3.328800e-05 Joules
+Timestep: 400, model time is 4.000000e-06 secs, current runtime is 29.20 seconds. 999999 active neutrons, 1392886 fissions, releasing 2.785772e+08 MeV and 4.457235e-05 Joules
+Timestep: 500, model time is 5.000000e-06 secs, current runtime is 36.45 seconds. 999999 active neutrons, 1745602 fissions, releasing 3.491204e+08 MeV and 5.585926e-05 Joules
+Timestep: 600, model time is 6.000000e-06 secs, current runtime is 43.70 seconds. 999999 active neutrons, 2097657 fissions, releasing 4.195314e+08 MeV and 6.712502e-05 Joules
+Timestep: 700, model time is 7.000000e-06 secs, current runtime is 50.95 seconds. 999999 active neutrons, 2450091 fissions, releasing 4.900182e+08 MeV and 7.840291e-05 Joules
+Timestep: 800, model time is 8.000000e-06 secs, current runtime is 58.20 seconds. 999999 active neutrons, 2801839 fissions, releasing 5.603678e+08 MeV and 8.965885e-05 Joules
+Timestep: 900, model time is 9.000000e-06 secs, current runtime is 65.51 seconds. 999999 active neutrons, 3153735 fissions, releasing 6.307470e+08 MeV and 1.009195e-04 Joules
+------------------------------------------------------------------------------------------------
+Model completed after 1000 timesteps
+Total model time: 0.000010 secs
+Total fissions: 3503006 releasing 7.006012e+08 MeV and 1.120962e-04 Joules
+Total runtime: 72.68 seconds
