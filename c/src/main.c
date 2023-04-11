@@ -7,6 +7,8 @@
 #include "simulation_configuration.h"
 #include "simulation_support.h"
 
+#include <mpi.h>
+
 // Height of a fuel pellet in meters (they are 40mm by 40mm by 2.5mm)
 #define HEIGHT_FUEL_PELLET_M 0.0025
 // Size of each reactor channel in meters (they are cuboid, so this value in x and y)
@@ -53,52 +55,78 @@ void interactWithReactor(struct neutron_struct *neutron, struct channel_struct *
 bool determineOutbound(struct neutron_struct *neutron, struct simulation_configuration_struct *configuration, long int i);
 
 
+// MPI variables
+int size, rank;
+MPI_Comm world;
+
 /**
  * Program entry point, this code is run with configuration file as command line argument
  **/
 int main(int argc, char *argv[])
 {
+
+    MPI_Init(NULL,NULL);
+    world = MPI_COMM_WORLD;
+    MPI_Comm_rank(world,&rank);
+    MPI_Comm_size(world,&size);
+
+    printf("Rank %d reporting\n",rank);
+
     if (argc != 3)
     {
         printf("You must provide two arguments, the configuration filename and output filename to the code\n");
         return -1;
     }
+
     time_t t;
+
     // Seed the random number generator
     srand((unsigned)time(&t));
     struct timeval start_time;
+
+
     // Parse the configuration and then initialise reactor core and neutrons from this
     struct simulation_configuration_struct configuration;
     parseConfiguration(argv[1], &configuration);
     initialiseReactorCore(&configuration);
     initialiseNeutrons(&configuration);
+
+
     // Empty the file we will use to store the reactor state
     clearReactorStateFile(argv[2]);
-    printf("Simulation configured for reactor core of size %dm by %dm by %dm, timesteps=%d dt=%dns\n", configuration.size_x,
-           configuration.size_y, configuration.size_z, configuration.num_timesteps, configuration.dt);
-    printf("------------------------------------------------------------------------------------------------\n");
+    if(rank==0) printf("Simulation configured for reactor core of size %dm by %dm by %dm, timesteps=%d dt=%dns\n", configuration.size_x,
+                       configuration.size_y, configuration.size_z, configuration.num_timesteps, configuration.dt);
+    if(rank==0) printf("------------------------------------------------------------------------------------------------\n");
     gettimeofday(&start_time, NULL); // Record simulation start time (for runtime statistics)
+
+
     for (int i = 0; i < configuration.num_timesteps; i++)
     {
         // Progress in timesteps
         step(configuration.dt, &configuration);
-        if (i > 0 && i % configuration.display_progess_frequency == 0)
+        if (i > 0 && i % configuration.display_progess_frequency == 0 && rank==0)
         {
             generateReport(configuration.dt, i, &configuration, start_time);
         }
 
-        if (i > 0 && i % configuration.write_reactor_state_frequency == 0)
+        if (i > 0 && i % configuration.write_reactor_state_frequency == 0 && rank==0)
         {
             writeReactorState(&configuration, i, argv[2]);
         }
     }
+
+
     // Now we are finished write some summary information
     unsigned long int num_fissions = getTotalNumberFissions(&configuration);
     double mev = getMeVFromFissions(num_fissions);
     double joules = getJoulesFromMeV(mev);
-    printf("------------------------------------------------------------------------------------------------\n");
-    printf("Model completed after %d timesteps\nTotal model time: %f secs\nTotal fissions: %ld releasing %e MeV and %e Joules\nTotal runtime: %.2f seconds\n",
-           configuration.num_timesteps, (NS_AS_SEC * configuration.dt) * configuration.num_timesteps, num_fissions, mev, joules, getElapsedTime(start_time));
+    if(rank==0) printf("------------------------------------------------------------------------------------------------\n");
+    if(rank==0) printf("Model completed after %d timesteps\nTotal model time: %f secs\nTotal fissions: %ld releasing %e MeV and %e Joules\nTotal runtime: %.2f seconds\n",
+                       configuration.num_timesteps, (NS_AS_SEC * configuration.dt) * configuration.num_timesteps, num_fissions, mev, joules, getElapsedTime(start_time));
+
+
+    MPI_Finalize();
+
 }
 
 /**
