@@ -1,0 +1,16 @@
+Simulation configured for reactor core of size 1m by 1m by 1m, timesteps=1000 dt=10ns
+------------------------------------------------------------------------------------------------
+Timestep: 100, model time is 1.000000e-06 secs, current runtime is 8.31 seconds. 1000000 active neutrons, 375974 fissions, releasing 7.519480e+07 MeV and 1.203117e-05 Joules
+Timestep: 200, model time is 2.000000e-06 secs, current runtime is 16.47 seconds. 1000000 active neutrons, 738280 fissions, releasing 1.476560e+08 MeV and 2.362496e-05 Joules
+Timestep: 300, model time is 3.000000e-06 secs, current runtime is 24.63 seconds. 1000000 active neutrons, 1089478 fissions, releasing 2.178956e+08 MeV and 3.486330e-05 Joules
+Timestep: 400, model time is 4.000000e-06 secs, current runtime is 32.80 seconds. 1000000 active neutrons, 1429369 fissions, releasing 2.858738e+08 MeV and 4.573981e-05 Joules
+Timestep: 500, model time is 5.000000e-06 secs, current runtime is 41.26 seconds. 1000000 active neutrons, 1759032 fissions, releasing 3.518064e+08 MeV and 5.628902e-05 Joules
+Timestep: 600, model time is 6.000000e-06 secs, current runtime is 49.49 seconds. 1000000 active neutrons, 2078395 fissions, releasing 4.156790e+08 MeV and 6.650864e-05 Joules
+Timestep: 700, model time is 7.000000e-06 secs, current runtime is 57.65 seconds. 1000000 active neutrons, 2386457 fissions, releasing 4.772914e+08 MeV and 7.636662e-05 Joules
+Timestep: 800, model time is 8.000000e-06 secs, current runtime is 65.81 seconds. 1000000 active neutrons, 2684054 fissions, releasing 5.368108e+08 MeV and 8.588973e-05 Joules
+Timestep: 900, model time is 9.000000e-06 secs, current runtime is 73.97 seconds. 1000000 active neutrons, 2972714 fissions, releasing 5.945428e+08 MeV and 9.512685e-05 Joules
+------------------------------------------------------------------------------------------------
+Model completed after 1000 timesteps
+Total model time: 0.000010 secs
+Total fissions: 3249411 releasing 6.498822e+08 MeV and 1.039812e-04 Joules
+Total runtime: 82.04 seconds
