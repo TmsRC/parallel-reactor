@@ -180,6 +180,26 @@ int main(int argc, char *argv[])
         }
     }
 
+    long int count_inactive = 0;
+    currentNeutronIndex = configuration->max_neutrons;
+
+    for (long int i = 0; i < configuration->max_neutrons; i++)
+    {
+
+        if (neutrons[i].active)
+        {
+            currentNeutronIndex --;
+            neutron_index[currentNeutronIndex] = i;
+        }
+        else
+        {
+            neutron_index[count_inactive] = i;
+            count_inactive ++;
+        }
+
+    }
+
+
 }
 
 /**
@@ -529,8 +549,8 @@ void __attribute__ ((noinline)) interactWithFuelAssembly(struct neutron_struct *
         if (collision)
         {
             neutron->active = false;
-            neutron_index[currentNeutronIndex] = i;
-            currentNeutronIndex++;
+//            neutron_index[currentNeutronIndex] = i;
+//            currentNeutronIndex++;
         }
     }
 }
@@ -543,8 +563,8 @@ void __attribute__ ((noinline)) interactWithModerator(struct neutron_struct *neu
     if (absorbed)
     {
         neutrons->active = false;
-        neutron_index[currentNeutronIndex] = i;
-        currentNeutronIndex++;
+//        neutron_index[currentNeutronIndex] = i;
+//        currentNeutronIndex++;
     }
 }
 
@@ -555,8 +575,8 @@ void __attribute__ ((noinline)) interactWithControlRod(struct neutron_struct *ne
     {
         // Has hit the control rod, therefore this absorbed and removed from simulation
         neutron->active = false;
-        neutron_index[currentNeutronIndex] = i;
-        currentNeutronIndex++;
+//        neutron_index[currentNeutronIndex] = i;
+//        currentNeutronIndex++;
     }
 }
 
@@ -589,8 +609,8 @@ bool __attribute__ ((noinline)) determineOutbound(struct neutron_struct *neutron
     if(outbound) {
         // Moved out of the reactor core, so deactivate the neutron
         neutron->active = false;
-        neutron_index[currentNeutronIndex] = i;
-        currentNeutronIndex++;
+//        neutron_index[currentNeutronIndex] = i;
+//        currentNeutronIndex++;
     }
 
     return outbound;
