@@ -7,7 +7,7 @@ CFLAGS=-pg -O3
 #archer2: CC=mpicc
 #archer2: build
 
-cirrus: CC=mpicc
+cirrus: CC=gcc
 cirrus: build
 
 build: 
