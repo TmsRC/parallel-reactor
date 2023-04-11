@@ -13,6 +13,7 @@ reactor_time="time_"$run_name"_"$datetime".out"
 
 echo $reactor_results
 
+make clean
 make
 
 mpirun -n $num_procs ./reactor "config_"$run_name".txt" $reactor_results > $reactor_time

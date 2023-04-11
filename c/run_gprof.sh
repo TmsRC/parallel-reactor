@@ -12,6 +12,7 @@ profiling="profiling_"$run_name"_"$datetime".out"
 
 echo $reactor_results
 
+make clean
 make
 
 ./reactor "config_"$run_name".txt" $reactor_results > $reactor_time

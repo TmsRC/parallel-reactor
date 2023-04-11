@@ -13,3 +13,5 @@ cirrus: build
 build: 
 	$(CC) -o reactor $(SRC) $(CFLAGS) $(LFLAGS)
 
+clean:
+	rm ./reactor
