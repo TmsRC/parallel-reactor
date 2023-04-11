@@ -1,5 +1,8 @@
 #!/bin/sh
 
+module load -s intel-compilers-19
+module load -s mpt
+
 #run_name=lean
 run_name=$1
 echo $run_name

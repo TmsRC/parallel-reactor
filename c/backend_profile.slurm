@@ -15,6 +15,9 @@
 #SBATCH --cpus-per-task=1
 
 
+module load -s intel-compilers-19
+module load -s mpt
+
 run_name=$1
 echo $run_name
 
