@@ -156,14 +156,15 @@ int main(int argc, char *argv[])
     {
         if (neutrons[i].active)
         {
-
             updateNeutronPosition(&neutrons[i],dt);
-
             bool outbound = determineOutbound(&neutrons[i],configuration,i);
-            if (outbound)
-            {
-                continue;
-            }
+        }
+    }
+
+    for (long int i = 0; i < configuration->max_neutrons; i++)
+    {
+        if(neutrons[i].active)
+        {
 
             // Now figure out if neutron is in a fuel assembly, moderator or control rod. If so then need to handle interaction
             struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[i].pos_x, neutrons[i].pos_y, configuration);
@@ -178,6 +179,7 @@ int main(int argc, char *argv[])
             }
         }
     }
+
 }
 
 /**
