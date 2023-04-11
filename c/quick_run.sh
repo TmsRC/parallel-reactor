@@ -2,6 +2,7 @@
 
 #run_name=lean
 run_name=$1
+num_procs=$2
 echo $run_name
 
 datetime=$(date +'%m-%d-%T')
@@ -14,7 +15,7 @@ echo $reactor_results
 
 make
 
-./reactor "config_"$run_name".txt" $reactor_results > $reactor_time
+mpirun -n $num_procs ./reactor "config_"$run_name".txt" $reactor_results > $reactor_time
 
 #gprof reactor gmon.out > $profiling
 
