@@ -73,9 +73,9 @@ struct neutron_generator_struct
 // Represents an individual neutron
 struct neutron_struct
 {
-  short x, y, z;
   double pos_x, pos_y, pos_z;
   double energy;
+  short x, y, z;
   bool active;
 };
 
