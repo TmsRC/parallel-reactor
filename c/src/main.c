@@ -67,29 +67,37 @@ MPI_Datatype MPI_SIMPLE_NEUTRON;
 MPI_Datatype MPI_SPARSE_NEUTRONS;
 
 MPI_Request neutrons_send_request;
+MPI_Request neutrons_recv_request;
 
 // Temporary variables
 
 /*long*/ int *fuel_assembly_neutrons_index; // Note: I have to address this datatype issue
-
+int sender, receiver;
 
 
 void manage_fuel_assembly_interactions(struct simulation_configuration_struct *configuration)
 {
     MPI_Status status;
     int count;
-    MPI_Recv(&neutrons[0],configuration->max_neutrons,MPI_SIMPLE_NEUTRON,0,0,world,&status); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
-//    printf("Received\n");
+    MPI_Recv(&neutrons[0],configuration->max_neutrons,MPI_SIMPLE_NEUTRON,sender,0,world,&status); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
+//    printf("Rank %d -- Received neutrons.\n",rank);
+
     MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
 
 //    printf("Rank %d, count %ld\n",rank,count);
 
 //    for(int i=0; i<count; i+=100) printf("Rank %d, neutron %d, %lf,\n",rank,i,neutrons[i].energy);
 
-//    for(long int i=0; i<count; i++)
-//    {
-//        //interactWithFuel...
-//    }
+    for(long int i=0; i<count; i++)
+    {
+            struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[i].pos_x, neutrons[i].pos_y, configuration);
+
+            interactWithFuelAssembly(&neutrons[i],reactorChannel,configuration,0);
+
+    }
+
+//    printf("Rank %d -- Sending back...\n",rank);
+    MPI_Ssend(&neutrons[0],count,MPI_SIMPLE_NEUTRON,sender,0,world);
 
 }
 
@@ -99,9 +107,10 @@ void send_fuel_assembly_neutrons(int count)
     starting_index = 0;
     commit_sparse_neutrons_datatype(count);
 
-//    printf("Sending\n");
-    MPI_Ssend(&neutrons[starting_index],1,MPI_SPARSE_NEUTRONS, 1, 0, world, &neutrons_send_request); //Note: Need to change this ISsend(, &neutrons_send_request)
+//    printf("Rank %d -- Sending neutrons...\n",rank);
+    MPI_Issend(&neutrons[0],1,MPI_SPARSE_NEUTRONS, receiver, 0, world, &neutrons_send_request); //Note: Need to change this ISsend(, &neutrons_send_request)
 //    printf("Rank %d, count %ld\n",rank,count);
+    MPI_Irecv(&neutrons[0],1,MPI_SPARSE_NEUTRONS,receiver,0,world,&neutrons_recv_request);
 }
 
 
@@ -116,6 +125,9 @@ int main(int argc, char *argv[])
     world = MPI_COMM_WORLD;
     MPI_Comm_rank(world,&rank);
     MPI_Comm_size(world,&size);
+
+    sender = 1;
+    receiver = 0;
 
     printf("Rank %d reporting\n",rank);
 
@@ -142,9 +154,9 @@ int main(int argc, char *argv[])
 
     // Empty the file we will use to store the reactor state
     clearReactorStateFile(argv[2]);
-    if(rank==0) printf("Simulation configured for reactor core of size %dm by %dm by %dm, timesteps=%d dt=%dns\n", configuration.size_x,
+    if(rank==receiver) printf("Simulation configured for reactor core of size %dm by %dm by %dm, timesteps=%d dt=%dns\n", configuration.size_x,
                        configuration.size_y, configuration.size_z, configuration.num_timesteps, configuration.dt);
-    if(rank==0) printf("------------------------------------------------------------------------------------------------\n");
+    if(rank==receiver) printf("------------------------------------------------------------------------------------------------\n");
     gettimeofday(&start_time, NULL); // Record simulation start time (for runtime statistics)
 
 //    printf("Max int: %d. Num neutrons: %ld ",INT_MAX,configuration.max_neutrons);
@@ -153,12 +165,12 @@ int main(int argc, char *argv[])
     {
         // Progress in timesteps
         step(configuration.dt, &configuration);
-        if (i > 0 && i % configuration.display_progess_frequency == 0 && rank==0)
+        if (i > 0 && i % configuration.display_progess_frequency == 0 && rank==receiver)
         {
             generateReport(configuration.dt, i, &configuration, start_time);
         }
 
-        if (i > 0 && i % configuration.write_reactor_state_frequency == 0 && rank==0)
+        if (i > 0 && i % configuration.write_reactor_state_frequency == 0 && rank==receiver)
         {
             writeReactorState(&configuration, i, argv[2]);
         }
@@ -169,8 +181,8 @@ int main(int argc, char *argv[])
     unsigned long int num_fissions = getTotalNumberFissions(&configuration);
     double mev = getMeVFromFissions(num_fissions);
     double joules = getJoulesFromMeV(mev);
-    if(rank==0) printf("------------------------------------------------------------------------------------------------\n");
-    if(rank==0) printf("Model completed after %d timesteps\nTotal model time: %f secs\nTotal fissions: %ld releasing %e MeV and %e Joules\nTotal runtime: %.2f seconds\n",
+    if(rank==receiver) printf("------------------------------------------------------------------------------------------------\n");
+    if(rank==receiver) printf("Model completed after %d timesteps\nTotal model time: %f secs\nTotal fissions: %ld releasing %e MeV and %e Joules\nTotal runtime: %.2f seconds\n",
                        configuration.num_timesteps, (NS_AS_SEC * configuration.dt) * configuration.num_timesteps, num_fissions, mev, joules, getElapsedTime(start_time));
 
 
@@ -183,8 +195,9 @@ int main(int argc, char *argv[])
  **/
 /*static*/ void step(int dt, struct simulation_configuration_struct *configuration)
 {
-    /*if(rank==1)*/ updateNeutrons(dt, configuration);
-    /*if(rank==1)*/ updateReactorCore(dt, configuration);
+    if(rank==sender) updateNeutrons(dt, configuration);
+    if(rank==receiver) manage_fuel_assembly_interactions(configuration);
+    updateReactorCore(dt, configuration);
 }
 
 /**
@@ -211,12 +224,12 @@ int main(int argc, char *argv[])
         {
             if (reactor_core[i][j].type == FUEL_ASSEMBLY)
             {
-                updateFuelAssembly(dt, &(reactor_core[i][j]));
+                if(rank==receiver) updateFuelAssembly(dt, &(reactor_core[i][j]));
             }
 
             if (reactor_core[i][j].type == NEUTRON_GENERATOR)
             {
-                updateNeutronGenerator(dt, &(reactor_core[i][j]), configuration);
+                if(rank==sender) updateNeutronGenerator(dt, &(reactor_core[i][j]), configuration);
             }
         }
     }
@@ -250,8 +263,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if(rank==0) send_fuel_assembly_neutrons(num_fuel_interacting);
-    if(rank==1) manage_fuel_assembly_interactions(configuration);
+    send_fuel_assembly_neutrons(num_fuel_interacting);
 
     for (long int i = 0; i < configuration->max_neutrons; i++)
     {
@@ -274,6 +286,11 @@ int main(int argc, char *argv[])
 
     long int count_inactive = 0;
     currentNeutronIndex = configuration->max_neutrons;
+
+    MPI_Status status;
+    MPI_Wait(&neutrons_send_request,&status);
+    MPI_Wait(&neutrons_recv_request,&status);
+//    printf("Rank %d -- Received back.",rank);
 
     for (long int i = 0; i < configuration->max_neutrons; i++)
     {
@@ -589,6 +606,9 @@ int main(int argc, char *argv[])
  **/
 /*static*/ unsigned long int getNumberActiveNeutrons(struct simulation_configuration_struct *configuration)
 {
+
+    // Note: reduction here
+
     unsigned long int activeNeutrons = 0;
     for (unsigned long int i = 0; i < configuration->max_neutrons; i++)
     {
@@ -677,10 +697,10 @@ void __attribute__ ((noinline)) interactWithControlRod(struct neutron_struct *ne
 
 void __attribute__ ((noinline)) interactWithReactor(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i) {
 
-    if (reactorChannel->type == FUEL_ASSEMBLY)
-    {
-        interactWithFuelAssembly(neutron,reactorChannel,configuration,i);
-    }
+//    if (reactorChannel->type == FUEL_ASSEMBLY)
+//    {
+//        interactWithFuelAssembly(neutron,reactorChannel,configuration,i);
+//    }
 
     if (reactorChannel->type == MODERATOR)
     {
@@ -797,4 +817,3 @@ void commit_simple_neutron_datatype()
 //      MPI_Type_commit(&MPI_SIMPLE_NEUTRON);
 //
 //}
-
