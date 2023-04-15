@@ -78,8 +78,8 @@ void manage_fuel_assembly_interactions(struct simulation_configuration_struct *c
 {
     MPI_Status status;
     int count;
-    MPI_Recv(&neutrons[0],configuration->max_neutrons,MPI_SIMPLE_NEUTRON,1,0,world,&status); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
-
+    MPI_Recv(&neutrons[0],configuration->max_neutrons,MPI_SIMPLE_NEUTRON,0,0,world,&status); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
+//    printf("Received\n");
     MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
 
 //    printf("Rank %d, count %ld\n",rank,count);
@@ -98,7 +98,9 @@ void send_fuel_assembly_neutrons(int count)
     int starting_index = fuel_assembly_neutrons_index[0];
     starting_index = 0;
     commit_sparse_neutrons_datatype(count);
-    MPI_Ssend(&neutrons[starting_index],1,MPI_SPARSE_NEUTRONS, 0, 0, world); //Note: Need to change this ISsend(, &neutrons_send_request)
+
+//    printf("Sending\n");
+    MPI_Ssend(&neutrons[starting_index],1,MPI_SPARSE_NEUTRONS, 1, 0, world, &neutrons_send_request); //Note: Need to change this ISsend(, &neutrons_send_request)
 //    printf("Rank %d, count %ld\n",rank,count);
 }
 
@@ -136,6 +138,7 @@ int main(int argc, char *argv[])
     initialiseReactorCore(&configuration);
     initialiseNeutrons(&configuration);
 
+    commit_simple_neutron_datatype();
 
     // Empty the file we will use to store the reactor state
     clearReactorStateFile(argv[2]);
@@ -247,6 +250,8 @@ int main(int argc, char *argv[])
         }
     }
 
+    if(rank==0) send_fuel_assembly_neutrons(num_fuel_interacting);
+    if(rank==1) manage_fuel_assembly_interactions(configuration);
 
     for (long int i = 0; i < configuration->max_neutrons; i++)
     {
@@ -714,7 +719,7 @@ bool __attribute__ ((noinline)) determineOutbound(struct neutron_struct *neutron
 
 void commit_sparse_neutrons_datatype(int count)
 {
-    MPI_Type_create_indexed_block(count,1,fuel_assembly_neutrons_index,MPI_SIMPLE_NEUTRON,&MPI_SPARSE_NEUTRONS);
+    MPI_Type_create_indexed_block(count,1,&fuel_assembly_neutrons_index[0],MPI_SIMPLE_NEUTRON,&MPI_SPARSE_NEUTRONS);
     MPI_Type_commit(&MPI_SPARSE_NEUTRONS);
 }
 
