@@ -7,6 +7,7 @@
 #include "simulation_configuration.h"
 #include "simulation_support.h"
 
+#include <limits.h>
 #include <mpi.h>
 
 // Height of a fuel pellet in meters (they are 40mm by 40mm by 2.5mm)
@@ -55,9 +56,53 @@ void interactWithReactor(struct neutron_struct *neutron, struct channel_struct *
 bool determineOutbound(struct neutron_struct *neutron, struct simulation_configuration_struct *configuration, long int i);
 
 
+void commit_simple_neutron_datatype(void);
+void commit_sparse_neutrons_datatype(int count);
+
+
 // MPI variables
 int size, rank;
 MPI_Comm world;
+MPI_Datatype MPI_SIMPLE_NEUTRON;
+MPI_Datatype MPI_SPARSE_NEUTRONS;
+
+MPI_Request neutrons_send_request;
+
+// Temporary variables
+
+/*long*/ int *fuel_assembly_neutrons_index; // Note: I have to address this datatype issue
+
+
+
+void manage_fuel_assembly_interactions(struct simulation_configuration_struct *configuration)
+{
+    MPI_Status status;
+    int count;
+    MPI_Recv(&neutrons[0],configuration->max_neutrons,MPI_SIMPLE_NEUTRON,1,0,world,&status); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
+
+    MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
+
+//    printf("Rank %d, count %ld\n",rank,count);
+
+//    for(int i=0; i<count; i+=100) printf("Rank %d, neutron %d, %lf,\n",rank,i,neutrons[i].energy);
+
+//    for(long int i=0; i<count; i++)
+//    {
+//        //interactWithFuel...
+//    }
+
+}
+
+void send_fuel_assembly_neutrons(int count)
+{
+    int starting_index = fuel_assembly_neutrons_index[0];
+    starting_index = 0;
+    commit_sparse_neutrons_datatype(count);
+    MPI_Ssend(&neutrons[starting_index],1,MPI_SPARSE_NEUTRONS, 0, 0, world); //Note: Need to change this ISsend(, &neutrons_send_request)
+//    printf("Rank %d, count %ld\n",rank,count);
+}
+
+
 
 /**
  * Program entry point, this code is run with configuration file as command line argument
@@ -99,6 +144,7 @@ int main(int argc, char *argv[])
     if(rank==0) printf("------------------------------------------------------------------------------------------------\n");
     gettimeofday(&start_time, NULL); // Record simulation start time (for runtime statistics)
 
+//    printf("Max int: %d. Num neutrons: %ld ",INT_MAX,configuration.max_neutrons);
 
     for (int i = 0; i < configuration.num_timesteps; i++)
     {
@@ -134,8 +180,8 @@ int main(int argc, char *argv[])
  **/
 /*static*/ void step(int dt, struct simulation_configuration_struct *configuration)
 {
-    updateNeutrons(dt, configuration);
-    updateReactorCore(dt, configuration);
+    /*if(rank==1)*/ updateNeutrons(dt, configuration);
+    /*if(rank==1)*/ updateReactorCore(dt, configuration);
 }
 
 /**
@@ -180,14 +226,27 @@ int main(int argc, char *argv[])
  **/
 /*static*/ void updateNeutrons(int dt, struct simulation_configuration_struct *configuration)
 {
+
+    int num_fuel_interacting = 0; // Note: for rolling messages will probably have to move this
+
     for (long int i = 0; i < configuration->max_neutrons; i++)
     {
         if (neutrons[i].active)
         {
             updateNeutronPosition(&neutrons[i],dt);
             bool outbound = determineOutbound(&neutrons[i],configuration,i);
+
+            struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[i].pos_x, neutrons[i].pos_y, configuration);
+
+            if (reactorChannel != NULL && reactorChannel->type == FUEL_ASSEMBLY)
+            {
+                fuel_assembly_neutrons_index[num_fuel_interacting] = i;
+                num_fuel_interacting++;
+            }
+
         }
     }
+
 
     for (long int i = 0; i < configuration->max_neutrons; i++)
     {
@@ -405,9 +464,11 @@ int main(int argc, char *argv[])
 {
     neutrons = (struct neutron_struct *)malloc(sizeof(struct neutron_struct) * simulation_configuration->max_neutrons);
     neutron_index = (unsigned long int *)malloc(sizeof(unsigned long int) * simulation_configuration->max_neutrons);
+    fuel_assembly_neutrons_index = (int *) malloc(sizeof(int)*simulation_configuration->max_neutrons); // Note: the issue is not even message count, is indices for the indexed_block. Will need to improve datatype commit function to solve this
     for (int i = 0; i < simulation_configuration->max_neutrons; i++)
     {
         neutron_index[i] = i;
+        fuel_assembly_neutrons_index[i] = -1; // Note: again, datatype issue could be problematic
         neutrons[i].active = false;
     }
     currentNeutronIndex = simulation_configuration->max_neutrons;
@@ -643,3 +704,92 @@ bool __attribute__ ((noinline)) determineOutbound(struct neutron_struct *neutron
 
     return outbound;
 }
+
+
+
+/*
+ * Parallelization-related functions
+ */
+
+
+void commit_sparse_neutrons_datatype(int count)
+{
+    MPI_Type_create_indexed_block(count,1,fuel_assembly_neutrons_index,MPI_SIMPLE_NEUTRON,&MPI_SPARSE_NEUTRONS);
+    MPI_Type_commit(&MPI_SPARSE_NEUTRONS);
+}
+
+
+
+void commit_simple_neutron_datatype()
+{
+    // Define block_lengths array.
+    const int block_lengths[3] = {4,3,1};
+
+    // Define displacements array.
+    MPI_Aint displs[3];
+
+    // Define dummy struct and get base address.
+    struct neutron_struct dummy;
+    MPI_Aint base_addr;
+    MPI_Get_address(&dummy, &base_addr);
+
+    //  Get addresses of dummy struct members and calculate displacements.
+    MPI_Get_address(&dummy.pos_x, &displs[0]);
+    MPI_Get_address(&dummy.x, &displs[1]);
+    MPI_Get_address(&dummy.active, &displs[2]);
+    displs[0] = MPI_Aint_diff(displs[0], base_addr);
+    displs[1] = MPI_Aint_diff(displs[1], base_addr);
+    displs[2] = MPI_Aint_diff(displs[2], base_addr);
+
+    // Define types array.
+    MPI_Datatype types[3] = {MPI_DOUBLE, MPI_SHORT, MPI_C_BOOL};
+
+    // Create MPI datatype for neutron_struct using block_lengths, displs, and types arrays.
+    MPI_Datatype tmp_type;
+    MPI_Type_create_struct(3, block_lengths, displs, types, &tmp_type);
+//    MPI_Type_create_struct(3, block_lengths, displs, types, &MPI_SIMPLE_NEUTRON);
+
+    // Resize the MPI datatype to match the size of neutron_struct.
+    MPI_Type_create_resized(tmp_type, 0, sizeof(dummy), &MPI_SIMPLE_NEUTRON);
+
+    // Commit the MPI datatype.
+    MPI_Type_commit(&MPI_SIMPLE_NEUTRON);
+
+}
+
+
+//void commit_simple_neutron_datatype()
+//{
+//      // Define block_lengths array.
+//      const int block_lengths[2] = {2,1};
+//
+//      // Define displacements array.
+//      MPI_Aint displs[2];
+//
+//      // Define dummy struct and get base address.
+//      struct neutron_struct dummy;
+//      MPI_Aint base_addr;
+//      MPI_Get_address(&dummy, &base_addr);
+//
+//      // Get addresses of dummy struct members and calculate displacements.
+//      MPI_Get_address(&dummy.x, &displs[0]);
+//      MPI_Get_address(&dummy.pos_x, &displs[1]);
+//      displs[0] = MPI_Aint_diff(displs[0], base_addr);
+//      displs[1] = MPI_Aint_diff(displs[1], base_addr);
+//
+//      // Define types array.
+//      MPI_Datatype types[3] = {MPI_SHORT,MPI_DOUBLE,MPI_C_BOOL};
+//
+//      // Create MPI datatype for neutron_struct using block_lengths, displs, and types arrays.
+//      MPI_Datatype tmp_type;
+//      MPI_Type_create_struct(2, block_lengths, displs, types, &tmp_type);
+////    MPI_Type_create_struct(2, block_lengths, displs, types, &MPI_SIMPLE_NEUTRON);
+//
+//      // Resize the MPI datatype to match the size of neutron_struct.
+//      MPI_Type_create_resized(tmp_type, displs[0], sizeof(dummy), &MPI_SIMPLE_NEUTRON);
+//
+//      // Commit the MPI datatype.
+//      MPI_Type_commit(&MPI_SIMPLE_NEUTRON);
+//
+//}
+
