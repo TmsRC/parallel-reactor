@@ -901,7 +901,6 @@ void executeFissions(int dt, struct channel_struct *channel)
         for (unsigned long int j = 0; j < num_u236; j++)
         {
             int num_neutrons = fissionU236(channel, i);
-            createNeutrons(num_neutrons, channel, (i * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2));
             channel->contents.fuel_assembly.num_fissions++;
             fission_neutrons_counter+=num_neutrons;
         }
@@ -909,7 +908,6 @@ void executeFissions(int dt, struct channel_struct *channel)
         for (unsigned long int j = 0; j < num_pu240; j++)
         {
             int num_neutrons = fissionPu240(channel, i);
-            createNeutrons(num_neutrons, channel, (i * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2));
             channel->contents.fuel_assembly.num_fissions++;
             fission_neutrons_counter+=num_neutrons;
         }
