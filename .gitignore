@@ -3,3 +3,4 @@
 reactor
 core
 c/profile.*
+c/vtune-hotspots.cirrus-login2/
