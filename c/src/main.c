@@ -21,6 +21,12 @@
 // Number of nanoseconds in a second
 #define NS_AS_SEC 1e-9
 
+struct fission_event {
+    unsigned long int generated_neutrons;
+    int pellet_height;
+};
+
+
 // The neutrons that are currently moving throughout the reactor core
 struct neutron_struct *neutrons;
 // Indexes of empty neutrons (i.e. those inactive) that can be used
@@ -57,6 +63,7 @@ bool determineOutbound(struct neutron_struct *neutron, struct simulation_configu
 
 
 void commit_simple_neutron_datatype(void);
+void commit_fission_event_datatype(void);
 void commit_sparse_neutrons_datatype(int count);
 
 
@@ -65,6 +72,7 @@ int size, rank;
 MPI_Comm world;
 MPI_Datatype MPI_SIMPLE_NEUTRON;
 MPI_Datatype MPI_SPARSE_NEUTRONS;
+MPI_Datatype MPI_FISSION_EVENT;
 
 MPI_Request neutrons_send_request;
 MPI_Request neutrons_recv_request;
@@ -73,7 +81,10 @@ MPI_Request neutrons_recv_request;
 
 /*long*/ int *fuel_assembly_neutrons_index; // Note: I have to address this datatype issue
 int sender, receiver;
-
+unsigned long int fission_neutrons_counter;
+int max_pellets;
+int max_fission_events;
+struct fission_event *fission_array;
 
 void manage_fuel_assembly_interactions(struct simulation_configuration_struct *configuration)
 {
@@ -151,6 +162,7 @@ int main(int argc, char *argv[])
     initialiseNeutrons(&configuration);
 
     commit_simple_neutron_datatype();
+    commit_fission_event_datatype();
 
     // Empty the file we will use to store the reactor state
     clearReactorStateFile(argv[2]);
@@ -165,7 +177,7 @@ int main(int argc, char *argv[])
     {
         // Progress in timesteps
         step(configuration.dt, &configuration);
-        if (i > 0 && i % configuration.display_progess_frequency == 0 && rank==receiver)
+        if (i > 0 && i % configuration.display_progess_frequency == 0)
         {
             generateReport(configuration.dt, i, &configuration, start_time);
         }
@@ -205,11 +217,12 @@ int main(int argc, char *argv[])
  **/
 /*static*/ void generateReport(int dt, int timestep, struct simulation_configuration_struct *configuration, struct timeval start_time)
 {
+    unsigned long int num_active_neutrons = getNumberActiveNeutrons(configuration);
     unsigned long int num_fissions = getTotalNumberFissions(configuration);
     double mev = getMeVFromFissions(num_fissions);
     double joules = getJoulesFromMeV(mev);
-    printf("Timestep: %d, model time is %e secs, current runtime is %.2f seconds. %ld active neutrons, %ld fissions, releasing %e MeV and %e Joules\n", timestep,
-           (NS_AS_SEC * dt) * timestep, getElapsedTime(start_time), getNumberActiveNeutrons(configuration), num_fissions, mev, joules);
+    if(rank==receiver) printf("Timestep: %d, model time is %e secs, current runtime is %.2f seconds. %ld active neutrons, %ld fissions, releasing %e MeV and %e Joules\n", timestep,
+           (NS_AS_SEC * dt) * timestep, getElapsedTime(start_time), num_active_neutrons, num_fissions, mev, joules);
 }
 
 /**
@@ -224,7 +237,7 @@ int main(int argc, char *argv[])
         {
             if (reactor_core[i][j].type == FUEL_ASSEMBLY)
             {
-                if(rank==receiver) updateFuelAssembly(dt, &(reactor_core[i][j]));
+                /*if(rank==receiver)*/ updateFuelAssembly(dt, &(reactor_core[i][j]));
             }
 
             if (reactor_core[i][j].type == NEUTRON_GENERATOR)
@@ -233,6 +246,7 @@ int main(int argc, char *argv[])
             }
         }
     }
+
 }
 
 /**
@@ -317,14 +331,21 @@ int main(int argc, char *argv[])
  **/
 /*static*/ void updateFuelAssembly(int dt, struct channel_struct *channel)
 {
-    for (int i = 0; i < channel->contents.fuel_assembly.num_pellets; i++)
+
+    int initial_pellets = channel->contents.fuel_assembly.num_pellets;
+
+    for (int i = 0; i < initial_pellets && rank==receiver; i++)
     {
+
+        fission_neutrons_counter = 0;
+
         unsigned long int num_u236 = (unsigned long int)channel->contents.fuel_assembly.quantities[i][U236];
         for (unsigned long int j = 0; j < num_u236; j++)
         {
             int num_neutrons = fissionU236(channel, i);
             createNeutrons(num_neutrons, channel, (i * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2));
             channel->contents.fuel_assembly.num_fissions++;
+            fission_neutrons_counter+=num_neutrons;
         }
         unsigned long int num_pu240 = (unsigned long int)channel->contents.fuel_assembly.quantities[i][Pu240];
         for (unsigned long int j = 0; j < num_pu240; j++)
@@ -332,8 +353,27 @@ int main(int argc, char *argv[])
             int num_neutrons = fissionPu240(channel, i);
             createNeutrons(num_neutrons, channel, (i * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2));
             channel->contents.fuel_assembly.num_fissions++;
+            fission_neutrons_counter+=num_neutrons;
         }
+
+        // Note: creates structure with i and the total number of neutrons and adds to an array.
+        fission_array[i].generated_neutrons = fission_neutrons_counter;
+        fission_array[i].pellet_height = i;
+
     }
+
+    // Note: I need a simple structure that packages a number of neutrons and the pellet height (i). I send (scatter) all those at once, once per channel (i.e. do in this function)
+
+    if(rank==receiver) MPI_Ssend(&fission_array[0],initial_pellets,MPI_FISSION_EVENT,sender,0,world);
+    MPI_Status status; // Note: Fix this mess!!!
+    int count=0;
+    if(rank==sender) MPI_Recv(&fission_array[0],max_fission_events,MPI_FISSION_EVENT,receiver,0,world,&status); // Note: the initial pellets on the neutron handler is not up-to-date
+    if(rank==sender) MPI_Get_count(&status,MPI_FISSION_EVENT,&count); //Note: same with the mess!
+    for(int i=0; i < count && rank==sender; i++) {
+
+        createNeutrons(fission_array[i].generated_neutrons,channel,(fission_array[i].pellet_height * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2) );
+    }
+
 }
 
 /**
@@ -374,7 +414,12 @@ int main(int argc, char *argv[])
  **/
 /*static*/ void initialiseReactorCore(struct simulation_configuration_struct *simulation_configuration)
 {
+
+    max_fission_events = simulation_configuration->size_z / FUEL_PELLET_DEPTH;
+    fission_array = (struct fission_event *) malloc(sizeof(struct fission_event) * max_fission_events); // Note: Comms related change
+
     reactor_core = (struct channel_struct **)malloc(sizeof(struct channel_struct *) * simulation_configuration->channels_x);
+
     for (int i = 0; i < simulation_configuration->channels_x; i++)
     {
         reactor_core[i] = (struct channel_struct *)malloc(sizeof(struct channel_struct) * simulation_configuration->channels_y);
@@ -607,14 +652,17 @@ int main(int argc, char *argv[])
 /*static*/ unsigned long int getNumberActiveNeutrons(struct simulation_configuration_struct *configuration)
 {
 
-    // Note: reduction here
-
     unsigned long int activeNeutrons = 0;
-    for (unsigned long int i = 0; i < configuration->max_neutrons; i++)
+    for (unsigned long int i = 0; i < configuration->max_neutrons && rank!=receiver; i++)
     {
         if (neutrons[i].active)
             activeNeutrons++;
     }
+
+    MPI_Status status;
+    if(rank==sender) MPI_Ssend(&activeNeutrons,1,MPI_UNSIGNED_LONG,receiver,1,world);
+    if(rank==receiver) MPI_Recv(&activeNeutrons,1,MPI_UNSIGNED_LONG,sender,1,world,&status); // Note: change to reduction using collective
+
     return activeNeutrons;
 }
 
@@ -779,6 +827,40 @@ void commit_simple_neutron_datatype()
 
     // Commit the MPI datatype.
     MPI_Type_commit(&MPI_SIMPLE_NEUTRON);
+
+}
+
+void commit_fission_event_datatype()
+{
+    // Define block_lengths array.
+    const int block_lengths[2] = {1,1};
+
+    // Define displacements array.
+    MPI_Aint displs[2];
+
+    // Define dummy struct and get base address.
+    struct fission_event dummy;
+    MPI_Aint base_addr;
+    MPI_Get_address(&dummy, &base_addr);
+
+    //  Get addresses of dummy struct members and calculate displacements.
+    MPI_Get_address(&dummy.generated_neutrons, &displs[0]);
+    MPI_Get_address(&dummy.pellet_height, &displs[1]);
+    displs[0] = MPI_Aint_diff(displs[0], base_addr);
+    displs[1] = MPI_Aint_diff(displs[1], base_addr);
+
+    // Define types array.
+    MPI_Datatype types[2] = {MPI_UNSIGNED_LONG, MPI_INT};
+
+    // Create MPI datatype for neutron_struct using block_lengths, displs, and types arrays.
+    MPI_Datatype tmp_type;
+    MPI_Type_create_struct(2, block_lengths, displs, types, &tmp_type);
+
+    // Resize the MPI datatype to match the size of neutron_struct.
+    MPI_Type_create_resized(tmp_type, 0, sizeof(dummy), &MPI_FISSION_EVENT);
+
+    // Commit the MPI datatype.
+    MPI_Type_commit(&MPI_FISSION_EVENT);
 
 }
 
