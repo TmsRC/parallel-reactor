@@ -101,7 +101,8 @@ void manageFuelAssemblyInteractions(struct simulation_configuration_struct *conf
 {
     MPI_Status status;
     int count;
-    MPI_Recv(&neutrons[0],configuration->max_neutrons,MPI_SIMPLE_NEUTRON,sender,0,world,&status); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
+    MPI_Irecv(&neutrons[0],configuration->max_neutrons,MPI_SIMPLE_NEUTRON,sender,0,world,&neutrons_recv_request); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
+    MPI_Wait(&neutrons_recv_request,&status);
 //    printf("Rank %d -- Received neutrons.\n",rank);
 
     MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
@@ -119,7 +120,8 @@ void manageFuelAssemblyInteractions(struct simulation_configuration_struct *conf
     }
 
 //    printf("Rank %d -- Sending back...\n",rank);
-    MPI_Ssend(&neutrons[0],count,MPI_SIMPLE_NEUTRON,sender,0,world);
+    MPI_Issend(&neutrons[0],count,MPI_SIMPLE_NEUTRON,sender,0,world,&neutrons_send_request);
+    MPI_Wait(&neutrons_send_request,&status);
 
 }
 
@@ -127,10 +129,10 @@ void send_fuel_assembly_neutrons(int count)
 {
     int starting_index = fuel_assembly_neutrons_index[0];
     starting_index = 0;
-    commit_sparse_neutrons_datatype(count);
+    commit_sparse_neutrons_datatype(count); // Note: might have to change this for rolling messages
 
 //    printf("Rank %d -- Sending neutrons...\n",rank);
-    MPI_Issend(&neutrons[0],1,MPI_SPARSE_NEUTRONS, receiver, 0, world, &neutrons_send_request); //Note: Need to change this ISsend(, &neutrons_send_request)
+    MPI_Issend(&neutrons[0],1,MPI_SPARSE_NEUTRONS, receiver, 0, world, &neutrons_send_request);
 //    printf("Rank %d, count %ld\n",rank,count);
     MPI_Irecv(&neutrons[0],1,MPI_SPARSE_NEUTRONS,receiver,0,world,&neutrons_recv_request);
 }
@@ -919,7 +921,10 @@ void executeFissions(int dt, struct channel_struct *channel)
     }
 
     // Note: it is easiest to send (scatter) all fission_structs at once, once per channel (i.e. do in this function, it is required that every proc iterates channels in same order)
-    MPI_Ssend(&fission_array[0],initial_pellets,MPI_FISSION_EVENT,sender,0,world);
+    MPI_Status status;
+    MPI_Request request;
+    MPI_Issend(&fission_array[0],initial_pellets,MPI_FISSION_EVENT,sender,0,world,&request);
+    MPI_Wait(&request,&status);
 
 }
 
