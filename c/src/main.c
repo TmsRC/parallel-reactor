@@ -67,6 +67,11 @@ void commit_fission_event_datatype(void);
 void commit_sparse_neutrons_datatype(int count);
 
 
+void executeFissions(int dt, struct channel_struct *channel);
+void manageFuelAssemblyFissions(int dt, struct simulation_configuration_struct *configuration);
+void createNeutronsFromFission(struct channel_struct *channel);
+unsigned long int calculateNumberActiveNeutrons(struct simulation_configuration_struct *);
+
 // MPI variables
 int size, rank;
 MPI_Comm world;
@@ -85,6 +90,12 @@ unsigned long int fission_neutrons_counter;
 int max_pellets;
 int max_fission_events;
 struct fission_event *fission_array;
+
+
+
+
+
+
 
 void manageFuelAssemblyInteractions(struct simulation_configuration_struct *configuration)
 {
@@ -125,74 +136,7 @@ void send_fuel_assembly_neutrons(int count)
 }
 
 
-void executeFissions(int dt, struct channel_struct *channel)
-{
 
-    int initial_pellets = channel->contents.fuel_assembly.num_pellets;
-
-    for (int i = 0; i < initial_pellets && rank==receiver; i++)
-    {
-
-        fission_neutrons_counter = 0;
-
-        unsigned long int num_u236 = (unsigned long int)channel->contents.fuel_assembly.quantities[i][U236];
-        for (unsigned long int j = 0; j < num_u236; j++)
-        {
-            int num_neutrons = fissionU236(channel, i);
-            createNeutrons(num_neutrons, channel, (i * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2));
-            channel->contents.fuel_assembly.num_fissions++;
-            fission_neutrons_counter+=num_neutrons;
-        }
-        unsigned long int num_pu240 = (unsigned long int)channel->contents.fuel_assembly.quantities[i][Pu240];
-        for (unsigned long int j = 0; j < num_pu240; j++)
-        {
-            int num_neutrons = fissionPu240(channel, i);
-            createNeutrons(num_neutrons, channel, (i * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2));
-            channel->contents.fuel_assembly.num_fissions++;
-            fission_neutrons_counter+=num_neutrons;
-        }
-
-        // Note: creates structure with i and the total number of neutrons and adds to an array.
-        fission_array[i].generated_neutrons = fission_neutrons_counter;
-        fission_array[i].pellet_height = i;
-
-    }
-
-    // Note: it is easiest to send (scatter) all fission_structs at once, once per channel (i.e. do in this function, it is required that every proc iterates channels in same order)
-    MPI_Ssend(&fission_array[0],initial_pellets,MPI_FISSION_EVENT,sender,0,world);
-
-}
-
-
-void manageFuelAssemblyFissions(int dt, struct simulation_configuration_struct *configuration)
-{
-    for (int i = 0; i < configuration->channels_x; i++)
-    {
-        for (int j = 0; j < configuration->channels_y; j++)
-        {
-            if (reactor_core[i][j].type == FUEL_ASSEMBLY)
-            {
-                executeFissions(dt,&(reactor_core[i][j]));
-            }
-        }
-    }
-}
-
-
-void createNeutronsFromFission(struct channel_struct *channel)
-{
-    MPI_Status status;
-    int count;
-
-    MPI_Recv(&fission_array[0],max_fission_events,MPI_FISSION_EVENT,receiver,0,world,&status); // Note: num_pellets on the neutron handler is not up-to-date, max_fission is needed
-    MPI_Get_count(&status,MPI_FISSION_EVENT,&count);
-
-    for(int i=0; i < count && rank==sender; i++)
-    {
-        createNeutrons(fission_array[i].generated_neutrons,channel,(fission_array[i].pellet_height * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2) );
-    }
-
-}
 
 
 
@@ -250,12 +194,13 @@ int main(int argc, char *argv[])
         step(configuration.dt, &configuration);
         if (i > 0 && i % configuration.display_progess_frequency == 0)
         {
-            generateReport(configuration.dt, i, &configuration, start_time);
+            if(rank==sender) calculateNumberActiveNeutrons(&configuration);
+            if(rank==receiver) generateReport(configuration.dt, i, &configuration, start_time);
         }
 
-        if (i > 0 && i % configuration.write_reactor_state_frequency == 0 && rank==receiver)
+        if (i > 0 && i % configuration.write_reactor_state_frequency == 0)
         {
-            writeReactorState(&configuration, i, argv[2]);
+            if(rank==receiver) writeReactorState(&configuration, i, argv[2]);
         }
     }
 
@@ -293,7 +238,7 @@ int main(int argc, char *argv[])
     unsigned long int num_fissions = getTotalNumberFissions(configuration);
     double mev = getMeVFromFissions(num_fissions);
     double joules = getJoulesFromMeV(mev);
-    if(rank==receiver) printf("Timestep: %d, model time is %e secs, current runtime is %.2f seconds. %ld active neutrons, %ld fissions, releasing %e MeV and %e Joules\n", timestep,
+    printf("Timestep: %d, model time is %e secs, current runtime is %.2f seconds. %ld active neutrons, %ld fissions, releasing %e MeV and %e Joules\n", timestep,
            (NS_AS_SEC * dt) * timestep, getElapsedTime(start_time), num_active_neutrons, num_fissions, mev, joules);
 }
 
@@ -370,56 +315,6 @@ int main(int argc, char *argv[])
 
 }
 
-/**
- * Update the state of a specific fuel assembly in a channel for a timestep. This will fission all U236
- * and Pu239 in the assembly and update the constituent components as required
- **/
-/*static*/ void updateFuelAssembly(int dt, struct channel_struct *channel)
-{
-
-    int initial_pellets = channel->contents.fuel_assembly.num_pellets;
-
-    for (int i = 0; i < initial_pellets && rank==receiver; i++)
-    {
-
-        fission_neutrons_counter = 0;
-
-        unsigned long int num_u236 = (unsigned long int)channel->contents.fuel_assembly.quantities[i][U236];
-        for (unsigned long int j = 0; j < num_u236; j++)
-        {
-            int num_neutrons = fissionU236(channel, i);
-            createNeutrons(num_neutrons, channel, (i * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2));
-            channel->contents.fuel_assembly.num_fissions++;
-            fission_neutrons_counter+=num_neutrons;
-        }
-        unsigned long int num_pu240 = (unsigned long int)channel->contents.fuel_assembly.quantities[i][Pu240];
-        for (unsigned long int j = 0; j < num_pu240; j++)
-        {
-            int num_neutrons = fissionPu240(channel, i);
-            createNeutrons(num_neutrons, channel, (i * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2));
-            channel->contents.fuel_assembly.num_fissions++;
-            fission_neutrons_counter+=num_neutrons;
-        }
-
-        // Note: creates structure with i and the total number of neutrons and adds to an array.
-        fission_array[i].generated_neutrons = fission_neutrons_counter;
-        fission_array[i].pellet_height = i;
-
-    }
-
-    // Note: I need a simple structure that packages a number of neutrons and the pellet height (i). I send (scatter) all those at once, once per channel (i.e. do in this function)
-
-    if(rank==receiver) MPI_Ssend(&fission_array[0],initial_pellets,MPI_FISSION_EVENT,sender,0,world);
-    MPI_Status status; // Note: Fix this mess!!!
-    int count=0;
-    if(rank==sender) MPI_Recv(&fission_array[0],max_fission_events,MPI_FISSION_EVENT,receiver,0,world,&status); // Note: the initial pellets on the neutron handler is not up-to-date
-    if(rank==sender) MPI_Get_count(&status,MPI_FISSION_EVENT,&count); //Note: same with the mess!
-    for(int i=0; i < count && rank==sender; i++) {
-
-        createNeutrons(fission_array[i].generated_neutrons,channel,(fission_array[i].pellet_height * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2) );
-    }
-
-}
 
 /**
  * Update the state of a neutron generator for a timestep, generating the required
@@ -691,25 +586,40 @@ int main(int argc, char *argv[])
     return total_fissions;
 }
 
+
+/**
+ * Calculates the number of currently active neutrons in the simulation
+ **/
+/*static*/ unsigned long int calculateNumberActiveNeutrons(struct simulation_configuration_struct *configuration)
+{
+
+    unsigned long int activeNeutrons = 0;
+    for (unsigned long int i = 0; i < configuration->max_neutrons; i++)
+    {
+        if (neutrons[i].active)
+            activeNeutrons++;
+    }
+
+    MPI_Ssend(&activeNeutrons,1,MPI_UNSIGNED_LONG,receiver,1,world);
+
+    return activeNeutrons;
+}
+
+
 /**
  * Determines the number of currently active neutrons in the simulation
  **/
 /*static*/ unsigned long int getNumberActiveNeutrons(struct simulation_configuration_struct *configuration)
 {
 
-    unsigned long int activeNeutrons = 0;
-    for (unsigned long int i = 0; i < configuration->max_neutrons && rank!=receiver; i++)
-    {
-        if (neutrons[i].active)
-            activeNeutrons++;
-    }
-
     MPI_Status status;
-    if(rank==sender) MPI_Ssend(&activeNeutrons,1,MPI_UNSIGNED_LONG,receiver,1,world);
-    if(rank==receiver) MPI_Recv(&activeNeutrons,1,MPI_UNSIGNED_LONG,sender,1,world,&status); // Note: change to reduction using collective
+    unsigned long int activeNeutrons;
+
+    MPI_Recv(&activeNeutrons,1,MPI_UNSIGNED_LONG,sender,1,world,&status); // Note: change to reduction using collective
 
     return activeNeutrons;
 }
+
 
 /**
  * Returns in seconds the elapsed time since the start_time argument and now
@@ -968,3 +878,80 @@ void commit_fission_event_datatype()
 //      MPI_Type_commit(&MPI_SIMPLE_NEUTRON);
 //
 //}
+
+
+
+/**
+ * Update the state of a specific fuel assembly in a channel for a timestep. This will fission all U236
+ * and Pu239 in the assembly and update the constituent components as required
+ **/
+void executeFissions(int dt, struct channel_struct *channel)
+{
+
+    int initial_pellets = channel->contents.fuel_assembly.num_pellets;
+
+    for (int i = 0; i < initial_pellets; i++)
+    {
+
+        fission_neutrons_counter = 0;
+
+        unsigned long int num_u236 = (unsigned long int)channel->contents.fuel_assembly.quantities[i][U236];
+        for (unsigned long int j = 0; j < num_u236; j++)
+        {
+            int num_neutrons = fissionU236(channel, i);
+            createNeutrons(num_neutrons, channel, (i * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2));
+            channel->contents.fuel_assembly.num_fissions++;
+            fission_neutrons_counter+=num_neutrons;
+        }
+        unsigned long int num_pu240 = (unsigned long int)channel->contents.fuel_assembly.quantities[i][Pu240];
+        for (unsigned long int j = 0; j < num_pu240; j++)
+        {
+            int num_neutrons = fissionPu240(channel, i);
+            createNeutrons(num_neutrons, channel, (i * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2));
+            channel->contents.fuel_assembly.num_fissions++;
+            fission_neutrons_counter+=num_neutrons;
+        }
+
+        // Note: creates structure with i and the total number of neutrons and adds to an array.
+        fission_array[i].generated_neutrons = fission_neutrons_counter;
+        fission_array[i].pellet_height = i;
+
+    }
+
+    // Note: it is easiest to send (scatter) all fission_structs at once, once per channel (i.e. do in this function, it is required that every proc iterates channels in same order)
+    MPI_Ssend(&fission_array[0],initial_pellets,MPI_FISSION_EVENT,sender,0,world);
+
+}
+
+
+void manageFuelAssemblyFissions(int dt, struct simulation_configuration_struct *configuration)
+{
+    for (int i = 0; i < configuration->channels_x; i++)
+    {
+        for (int j = 0; j < configuration->channels_y; j++)
+        {
+            if (reactor_core[i][j].type == FUEL_ASSEMBLY)
+            {
+                executeFissions(dt,&(reactor_core[i][j]));
+            }
+        }
+    }
+}
+
+
+
+
+void createNeutronsFromFission(struct channel_struct *channel)
+{
+    MPI_Status status;
+    int count;
+
+    MPI_Recv(&fission_array[0],max_fission_events,MPI_FISSION_EVENT,receiver,0,world,&status); // Note: num_pellets on the neutron handler is not up-to-date, max_fission is needed
+    MPI_Get_count(&status,MPI_FISSION_EVENT,&count);
+
+    for(int i=0; i < count; i++)
+    {
+        createNeutrons(fission_array[i].generated_neutrons,channel,(fission_array[i].pellet_height * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2) );
+    }
+
+}
