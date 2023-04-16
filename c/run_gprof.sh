@@ -9,6 +9,7 @@ module load intel-mpi-19
 
 run_name=$1
 num_procs=$2
+vpos=$3
 echo $run_name
 
 datetime=$(date +'%m-%d-%T')
@@ -23,7 +24,7 @@ make clean
 make
 
 #mpirun -n $num_procs ./reactor "config_"$run_name".txt" $reactor_results > $reactor_time
-mpirun -n $num_procs amplxe-cl -collect hotspots -r vtune-hotspots ./reactor "config_"$run_name".txt" $reactor_results > $reactor_time
+mpirun -n $num_procs amplxe-cl -collect hotspots -r vtune-hotspots$vpos ./reactor "config_"$run_name".txt" $reactor_results > $reactor_time
 
 #gprof reactor gmon.out > $profiling
 
