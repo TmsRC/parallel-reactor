@@ -64,7 +64,7 @@ void rebuildIndex(struct simulation_configuration_struct *configuration);
 
 void commit_simple_neutron_datatype(void);
 void commit_fission_event_datatype(void);
-void commit_sparse_neutrons_datatype(int count);
+void commit_sparse_neutrons_datatype(int count, MPI_Datatype *sparse_neutrons);
 
 
 void executeFissions(int dt, struct channel_struct *channel);
@@ -76,11 +76,11 @@ unsigned long int calculateNumberActiveNeutrons(struct simulation_configuration_
 int size, rank;
 MPI_Comm world;
 MPI_Datatype MPI_SIMPLE_NEUTRON;
-MPI_Datatype MPI_SPARSE_NEUTRONS;
+MPI_Datatype *MPI_SPARSE_NEUTRONS;
 MPI_Datatype MPI_FISSION_EVENT;
 
-MPI_Request neutrons_send_request;
-MPI_Request neutrons_recv_request;
+MPI_Request *neutrons_send_request;
+MPI_Request *neutrons_recv_request;
 
 // Temporary variables
 
@@ -89,6 +89,9 @@ int sender, receiver;
 unsigned long int fission_neutrons_counter;
 int max_pellets;
 int max_fission_events;
+int num_rolling_msgs;
+/*long*/ int iterations_per_msg;
+//bool is_remainder_neutrons_msgs;
 struct fission_event *fission_array;
 
 
@@ -101,40 +104,41 @@ void manageFuelAssemblyInteractions(struct simulation_configuration_struct *conf
 {
     MPI_Status status;
     int count;
-    MPI_Irecv(&neutrons[0],configuration->max_neutrons,MPI_SIMPLE_NEUTRON,sender,0,world,&neutrons_recv_request); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
-    MPI_Wait(&neutrons_recv_request,&status);
-//    printf("Rank %d -- Received neutrons.\n",rank);
+    int msg_num = 0; // Note: change here for rolling messages
+    int buff_loc = 0;
 
-    MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
-
-//    printf("Rank %d, count %ld\n",rank,count);
-
-//    for(int i=0; i<count; i+=100) printf("Rank %d, neutron %d, %lf,\n",rank,i,neutrons[i].energy);
-
-    for(long int i=0; i<count; i++)
+    for(int msg_num = 0; msg_num < num_rolling_msgs; msg_num++)
     {
-            struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[i].pos_x, neutrons[i].pos_y, configuration);
+        MPI_Irecv(&neutrons[buff_loc],configuration->max_neutrons,MPI_SIMPLE_NEUTRON,sender,0,world,&neutrons_recv_request[msg_num]); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
+        MPI_Wait(&neutrons_recv_request[msg_num],&status);
 
+        MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
+
+        // printf("Rank %d, count %ld\n",rank,count);
+        // for(int i=0; i<count; i+=100) printf("Rank %d, neutron %d, %lf,\n",rank,i,neutrons[i].energy);
+
+        for(long int i=0; i<count; i++)
+        {
+            struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[i].pos_x, neutrons[i].pos_y, configuration);
             interactWithFuelAssembly(&neutrons[i],reactorChannel,configuration,0);
+        }
+
+        //printf("Rank %d -- Sending back...\n",rank);
+        MPI_Issend(&neutrons[buff_loc],count,MPI_SIMPLE_NEUTRON,sender,0,world,&neutrons_send_request[msg_num]);
+        MPI_Wait(&neutrons_send_request[msg_num],&status);
 
     }
 
-//    printf("Rank %d -- Sending back...\n",rank);
-    MPI_Issend(&neutrons[0],count,MPI_SIMPLE_NEUTRON,sender,0,world,&neutrons_send_request);
-    MPI_Wait(&neutrons_send_request,&status);
-
 }
 
-void send_fuel_assembly_neutrons(int count)
+
+void send_fuel_assembly_neutrons(int count, int msg_num)
 {
     int starting_index = fuel_assembly_neutrons_index[0];
     starting_index = 0;
-    commit_sparse_neutrons_datatype(count); // Note: might have to change this for rolling messages
-
-//    printf("Rank %d -- Sending neutrons...\n",rank);
-    MPI_Issend(&neutrons[0],1,MPI_SPARSE_NEUTRONS, receiver, 0, world, &neutrons_send_request);
-//    printf("Rank %d, count %ld\n",rank,count);
-    MPI_Irecv(&neutrons[0],1,MPI_SPARSE_NEUTRONS,receiver,0,world,&neutrons_recv_request);
+    commit_sparse_neutrons_datatype(count,&MPI_SPARSE_NEUTRONS[msg_num]); // Note: might have to change this for rolling messages
+    MPI_Issend(&neutrons[0],1,MPI_SPARSE_NEUTRONS[msg_num], receiver, 0, world, &neutrons_send_request[msg_num]);
+    MPI_Irecv(&neutrons[0],1,MPI_SPARSE_NEUTRONS[msg_num],receiver,0,world,&neutrons_recv_request[msg_num]);
 }
 
 
@@ -156,6 +160,11 @@ int main(int argc, char *argv[])
 
     sender = 1;
     receiver = 0;
+    num_rolling_msgs = 2; // Note: will have to add 1 if doesn't divide, or add extra neutrons to last msg
+
+    MPI_SPARSE_NEUTRONS = (MPI_Datatype *) malloc(sizeof(MPI_Datatype)*num_rolling_msgs);
+    neutrons_send_request = (MPI_Request *) malloc(sizeof(MPI_Request)*num_rolling_msgs);
+    neutrons_recv_request = (MPI_Request *) malloc(sizeof(MPI_Request)*num_rolling_msgs);
 
     printf("Rank %d reporting\n",rank);
 
@@ -178,6 +187,9 @@ int main(int argc, char *argv[])
     initialiseReactorCore(&configuration);
     initialiseNeutrons(&configuration);
 
+    iterations_per_msg = configuration.max_neutrons / num_rolling_msgs;
+    if(rank==receiver) printf("Its per msg: %d\n",iterations_per_msg);
+
     commit_simple_neutron_datatype();
     commit_fission_event_datatype();
 
@@ -190,7 +202,7 @@ int main(int argc, char *argv[])
 
 //    printf("Max int: %d. Num neutrons: %ld ",INT_MAX,configuration.max_neutrons);
 
-    for (int i = 0; i < configuration.num_timesteps; i++)
+    for (int i = 0; i < configuration.num_timesteps ; i++)
     {
         // Progress in timesteps
         step(configuration.dt, &configuration);
@@ -276,7 +288,11 @@ int main(int argc, char *argv[])
 /*static*/ void updateNeutrons(int dt, struct simulation_configuration_struct *configuration)
 {
 
+    MPI_Status status;
     int num_fuel_interacting = 0; // Note: for rolling messages will probably have to move this
+    int msg_num = 0;
+
+//    printf("%d\n",iterations_per_msg);
 
     for (long int i = 0; i < configuration->max_neutrons; i++)
     {
@@ -292,11 +308,21 @@ int main(int argc, char *argv[])
                 fuel_assembly_neutrons_index[num_fuel_interacting] = i;
                 num_fuel_interacting++;
             }
+        }
+
+        if ( (i+1)%iterations_per_msg == 0) // Note: lots of attention here, this loop is very different from the receiving one, so it has a significant deadlock risk
+        {
+            MPI_Status status;
+            if(msg_num>0) MPI_Wait(&neutrons_send_request[msg_num-1],&status);
+            if(msg_num>0) MPI_Wait(&neutrons_recv_request[msg_num-1],&status);
+            send_fuel_assembly_neutrons(num_fuel_interacting,msg_num);
+            msg_num ++;
+            num_fuel_interacting = 0;
 
         }
+
     }
 
-    send_fuel_assembly_neutrons(num_fuel_interacting);
 
     for (long int i = 0; i < configuration->max_neutrons; i++)
     {
@@ -308,11 +334,10 @@ int main(int argc, char *argv[])
         }
     }
 
-    MPI_Status status;
-    MPI_Wait(&neutrons_send_request,&status);
-    MPI_Wait(&neutrons_recv_request,&status);
-//    printf("Rank %d -- Received back.",rank);
-
+    MPI_Wait(&neutrons_send_request[msg_num-1],&status);
+    MPI_Wait(&neutrons_recv_request[msg_num-1],&status);
+////    printf("Rank %d -- Received back.",rank);
+//
     rebuildIndex(configuration);
 
 }
@@ -766,10 +791,10 @@ void __attribute__ ((noinline)) rebuildIndex(struct simulation_configuration_str
  */
 
 
-void commit_sparse_neutrons_datatype(int count)
+void commit_sparse_neutrons_datatype(int count, MPI_Datatype *sparse_neutrons)
 {
-    MPI_Type_create_indexed_block(count,1,&fuel_assembly_neutrons_index[0],MPI_SIMPLE_NEUTRON,&MPI_SPARSE_NEUTRONS);
-    MPI_Type_commit(&MPI_SPARSE_NEUTRONS);
+    MPI_Type_create_indexed_block(count,1,&fuel_assembly_neutrons_index[0],MPI_SIMPLE_NEUTRON,sparse_neutrons);
+    MPI_Type_commit(sparse_neutrons);
 }
 
 
