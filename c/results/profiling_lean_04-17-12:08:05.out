@@ -1,0 +1,655 @@
+Index  % CPU Time:Total  CPU Time:Self  CPU Time:Children  Name                                             Index
+-----  ----------------  -------------  -----------------  -----------------------------------------------  -----
+                         0.0            0.070                PMPI_Recv                                      [37] 
+                                                             <spontaneous>                                       
+                         1.000          3.380                manageFuelAssemblyFissions                     [16] 
+                         2.439          0.0                  updateNeutrons                                 [3]  
+                         21.789         35.441               main <cycle 2>                                 [2]  
+[1]    100.0             25.249         98.541             <cycle 2 as a whole>                             [1]  
+                         20.869         0.360                PMPI_Wait <cycle 2>                            [6]  
+                         2.729          10.070               ofi_cq_readfrom <cycle 2>                      [11] 
+                         1.470          25.739               ofi_cq_progress <cycle 2>                      [4]  
+                         0.320          2.712                manageFuelAssemblyInteractions <cycle 2>       [20] 
+                         0.010          66.540               main <cycle 2>                                 [2]  
+                         0.0            0.0                  [Unknown stack frame(s)] <cycle 2>             [95] 
+                         0.0            0.020                [stack] <cycle 2>                              [66] 
+                         0.0            0.0                  __libc_start_main <cycle 2>                    [113]
+                         0.0            0.0                  _start <cycle 2>                               [114]
+                                                                                                                 
+                                                             __libc_start_main <cycle 2>                    [113]
+[2]    53.76             0.010          66.540             main <cycle 2>                                   [2]  
+                                                             manageFuelAssemblyInteractions <cycle 2>       [20] 
+                         21.069         39.529               updateNeutrons                                 [3]  
+                         0.080          4.470                manageFuelAssemblyFissions                     [16] 
+                         0.030          0.0                  initialiseNeutrons                             [58] 
+                         0.020          0.0                  calculateNumberActiveNeutrons                  [63] 
+                         0.010          0.0                  __libc_malloc                                  [96] 
+                         0.010          0.0                  __read                                         [97] 
+                         0.010          0.0                  sscanf                                         [111]
+                         0.0            0.160                PMPI_Init                                      [42] 
+                         0.0            0.010                generateReport                                 [102]
+                         0.0            0.010                parseConfiguration                             [108]
+                         0.0            1.131                updateReactorCore                              [26] 
+                                                                                                                 
+                         21.069         39.529               main <cycle 2>                                 [2]  
+[3]    48.95             21.069         39.529             updateNeutrons                                   [3]  
+                         6.819          13.718               updateNeutronPosition                          [7]  
+                         4.569          0.0                  determineOutbound.constprop.2                  [15] 
+                         2.961          0.0                  rebuildIndex                                   [19] 
+                         2.439          0.0                  PMPI_Wait <cycle 2>                            [6]  
+                         2.411          4.691                interactWithReactor                            [13] 
+                         0.0            1.921                send_fuel_assembly_neutrons                    [25] 
+                                                                                                                 
+                                                             ofi_cq_readfrom <cycle 2>                      [11] 
+[4]    21.98             1.470          25.739             ofi_cq_progress <cycle 2>                        [4]  
+                         3.980          0.0                  pthread_spin_lock                              [9]  
+                         2.370          19.040               rxm_ep_progress_one                            [5]  
+                         0.180          0.0                  [Import thunk pthread_spin_lock]               [31] 
+                         0.170          0.0                  ofi_fastlock_acquire                           [34] 
+                                                             [Unknown stack frame(s)] <cycle 2>             [95] 
+                                                                                                                 
+                         2.370          19.040               ofi_cq_progress <cycle 2>                      [4]  
+[5]    17.29             2.370          19.040             rxm_ep_progress_one                              [5]  
+                         3.120          15.569               fi_ibv_cq_read                                 [8]  
+                         0.190          0.0                  ofi_fastlock_acquire_noop                      [41] 
+                         0.150          0.0                  ofi_fastlock_release_noop                      [44] 
+                         0.0            0.010                rxm_cq_handle_comp                             [65] 
+                                                                                                                 
+                                                             manageFuelAssemblyInteractions <cycle 2>       [20] 
+                         1.000          3.380                manageFuelAssemblyFissions                     [16] 
+                         2.439          0.0                  updateNeutrons                                 [3]  
+[6]    17.15             20.869         0.360              PMPI_Wait <cycle 2>                              [6]  
+                         0.360          0.0                  ofi_cq_read                                    [36] 
+                                                             ofi_cq_readfrom <cycle 2>                      [11] 
+                                                                                                                 
+                         6.819          13.718               updateNeutrons                                 [3]  
+[7]    16.59             6.819          13.718             updateNeutronPosition                            [7]  
+                         13.718         0.0                  MeVToVelocity                                  [10] 
+                                                                                                                 
+                         3.120          15.569               rxm_ep_progress_one                            [5]  
+[8]    15.1              3.120          15.569             fi_ibv_cq_read                                   [8]  
+                         10.549         0.0                  func@0xa620                                    [12] 
+                         3.860          0.0                  pthread_spin_lock                              [9]  
+                         0.260          0.0                  [Import thunk pthread_spin_lock]               [38] 
+                         0.220          0.0                  func@0xb110                                    [39] 
+                         0.210          0.0                  ofi_fastlock_acquire                           [40] 
+                         0.160          0.0                  ofi_fastlock_release                           [43] 
+                         0.160          0.0                  pthread_spin_init                              [28] 
+                         0.150          0.0                  [Import thunk pthread_spin_unlock]             [45] 
+                                                                                                                 
+                         0.010          0.0                  rxm_finish_recv                                [91] 
+                         3.860          0.0                  fi_ibv_cq_read                                 [8]  
+                         3.980          0.0                  ofi_cq_progress <cycle 2>                      [4]  
+                         7.660          0.0                  ofi_cq_readfrom <cycle 2>                      [11] 
+[9]    12.53             15.510         0.0                pthread_spin_lock                                [9]  
+                                                                                                                 
+                         13.718         0.0                  updateNeutronPosition                          [7]  
+[10]   11.08             13.718         0.0                MeVToVelocity                                    [10] 
+                                                                                                                 
+                         0.0            0.070                PMPI_Recv                                      [37] 
+                                                             PMPI_Wait <cycle 2>                            [6]  
+[11]   10.34             2.729          10.070             ofi_cq_readfrom <cycle 2>                        [11] 
+                         7.660          0.0                  pthread_spin_lock                              [9]  
+                         0.760          0.0                  pthread_spin_init                              [28] 
+                         0.530          0.0                  [Import thunk pthread_spin_unlock]             [32] 
+                         0.460          0.0                  ofi_fastlock_release                           [33] 
+                         0.370          0.0                  [Import thunk pthread_spin_lock]               [31] 
+                         0.290          0.0                  ofi_fastlock_acquire                           [34] 
+                                                             ofi_cq_progress <cycle 2>                      [4]  
+                                                                                                                 
+                         10.549         0.0                  fi_ibv_cq_read                                 [8]  
+[12]   8.52              10.549         0.0                func@0xa620                                      [12] 
+                                                                                                                 
+                         2.411          4.691                updateNeutrons                                 [3]  
+[13]   5.74              2.411          4.691              interactWithReactor                              [13] 
+                         0.250          4.441                interactWithModerator.constprop.3              [14] 
+                                                                                                                 
+                         0.250          4.441                interactWithReactor                            [13] 
+[14]   3.79              0.250          4.441              interactWithModerator.constprop.3                [14] 
+                         0.580          3.861                determineAndHandleIfNeutronModeratorCollision  [17] 
+                                                                                                                 
+                         4.569          0.0                  updateNeutrons                                 [3]  
+[15]   3.69              4.569          0.0                determineOutbound.constprop.2                    [15] 
+                                                                                                                 
+                         0.080          4.470                main <cycle 2>                                 [2]  
+[16]   3.68              0.080          4.470              manageFuelAssemblyFissions                       [16] 
+                         1.000          3.380                PMPI_Wait <cycle 2>                            [6]  
+                         0.060          0.0                  PMPI_Issend                                    [21] 
+                         0.010          0.020                fissionU236                                    [59] 
+                                                                                                                 
+                         0.580          3.861                interactWithModerator.constprop.3              [14] 
+[17]   3.59              0.580          3.861              determineAndHandleIfNeutronModeratorCollision    [17] 
+                         1.270          0.0                  rand                                           [18] 
+                         0.960          1.180                determineNeutronModeratorScattering            [24] 
+                         0.370          0.0                  expf32x                                        [35] 
+                         0.060          0.0                  func@0x401320                                  [50] 
+                         0.020          0.0                  func@0x4010e0                                  [64] 
+                                                                                                                 
+                         0.020          0.0                  fissionU236                                    [59] 
+                         0.040          0.0                  updateReactorCore                              [26] 
+                         0.771          0.0                  generateNeutronVelocityAndEnergy               [30] 
+                         0.921          0.0                  determineAndHandleIfNeutronFuelCollision       [23] 
+                         1.180          0.0                  determineNeutronModeratorScattering            [24] 
+                         1.270          0.0                  determineAndHandleIfNeutronModeratorCollision  [17] 
+[18]   3.39              4.201          0.0                rand                                             [18] 
+                                                                                                                 
+                         2.961          0.0                  updateNeutrons                                 [3]  
+[19]   2.39              2.961          0.0                rebuildIndex                                     [19] 
+                                                                                                                 
+                                                             main <cycle 2>                                 [2]  
+[20]   2.32              0.160          2.712              manageFuelAssemblyInteractions <cycle 2>         [20] 
+                         0.450          0.0                  PMPI_Issend                                    [21] 
+                         0.100          2.161                interactWithFuelAssembly.constprop.7           [22] 
+                                                             PMPI_Wait <cycle 2>                            [6]  
+                                                                                                                 
+                         0.060          0.0                  manageFuelAssemblyFissions                     [16] 
+                         0.450          0.0                  manageFuelAssemblyInteractions <cycle 2>       [20] 
+                         1.771          0.0                  send_fuel_assembly_neutrons                    [25] 
+[21]   1.84              2.281          0.0                PMPI_Issend                                      [21] 
+                                                                                                                 
+                         0.100          2.161                manageFuelAssemblyInteractions <cycle 2>       [20] 
+[22]   1.83              0.100          2.161              interactWithFuelAssembly.constprop.7             [22] 
+                         1.241          0.921                determineAndHandleIfNeutronFuelCollision       [23] 
+                                                                                                                 
+                         1.241          0.921                interactWithFuelAssembly.constprop.7           [22] 
+[23]   1.75              1.241          0.921              determineAndHandleIfNeutronFuelCollision         [23] 
+                         0.921          0.0                  rand                                           [18] 
+                                                                                                                 
+                         0.960          1.180                determineAndHandleIfNeutronModeratorCollision  [17] 
+[24]   1.73              0.960          1.180              determineNeutronModeratorScattering              [24] 
+                         1.180          0.0                  rand                                           [18] 
+                                                                                                                 
+                         0.0            1.921                updateNeutrons                                 [3]  
+[25]   1.55              0.0            1.921              send_fuel_assembly_neutrons                      [25] 
+                         1.771          0.0                  PMPI_Issend                                    [21] 
+                         0.100          0.0                  PMPI_Type_create_indexed_block                 [48] 
+                         0.050          0.0                  PMPI_Type_commit                               [52] 
+                                                                                                                 
+                         0.0            1.131                main <cycle 2>                                 [2]  
+[26]   0.91              0.0            1.131              updateReactorCore                                [26] 
+                         0.040          0.0                  rand                                           [18] 
+                         0.010          0.931                createNeutronsFromFission                      [27] 
+                         0.010          0.140                initialiseNeutron                              [29] 
+                                                                                                                 
+                         0.010          0.931                updateReactorCore                              [26] 
+[27]   0.76              0.010          0.931              createNeutronsFromFission                        [27] 
+                         0.170          0.080                PMPI_Recv                                      [37] 
+                         0.0            0.681                initialiseNeutron                              [29] 
+                                                                                                                 
+                         0.160          0.0                  fi_ibv_cq_read                                 [8]  
+                         0.760          0.0                  ofi_cq_readfrom <cycle 2>                      [11] 
+[28]   0.74              0.920          0.0                pthread_spin_init                                [28] 
+                                                                                                                 
+                         0.0            0.681                createNeutronsFromFission                      [27] 
+                         0.010          0.140                updateReactorCore                              [26] 
+[29]   0.67              0.010          0.821              initialiseNeutron                                [29] 
+                         0.040          0.781                generateNeutronVelocityAndEnergy               [30] 
+                                                                                                                 
+                         0.040          0.781                initialiseNeutron                              [29] 
+[30]   0.66              0.040          0.781              generateNeutronVelocityAndEnergy                 [30] 
+                         0.771          0.0                  rand                                           [18] 
+                         0.010          0.0                  func@0x401320                                  [50] 
+                                                                                                                 
+                         0.180          0.0                  ofi_cq_progress <cycle 2>                      [4]  
+                         0.370          0.0                  ofi_cq_readfrom <cycle 2>                      [11] 
+[31]   0.44              0.550          0.0                [Import thunk pthread_spin_lock]                 [31] 
+                                                                                                                 
+                         0.530          0.0                  ofi_cq_readfrom <cycle 2>                      [11] 
+[32]   0.43              0.530          0.0                [Import thunk pthread_spin_unlock]               [32] 
+                                                                                                                 
+                         0.460          0.0                  ofi_cq_readfrom <cycle 2>                      [11] 
+[33]   0.37              0.460          0.0                ofi_fastlock_release                             [33] 
+                                                                                                                 
+                         0.170          0.0                  ofi_cq_progress <cycle 2>                      [4]  
+                         0.290          0.0                  ofi_cq_readfrom <cycle 2>                      [11] 
+[34]   0.37              0.460          0.0                ofi_fastlock_acquire                             [34] 
+                                                                                                                 
+                         0.370          0.0                  determineAndHandleIfNeutronModeratorCollision  [17] 
+[35]   0.3               0.370          0.0                expf32x                                          [35] 
+                                                                                                                 
+                         0.360          0.0                  PMPI_Wait <cycle 2>                            [6]  
+[36]   0.29              0.360          0.0                ofi_cq_read                                      [36] 
+                                                                                                                 
+                         0.010          0.0                  generateReport                                 [102]
+                         0.170          0.080                createNeutronsFromFission                      [27] 
+[37]   0.21              0.180          0.080              PMPI_Recv                                        [37] 
+                         0.0            0.070                ofi_cq_readfrom <cycle 2>                      [11] 
+                         0.0            0.010                rxm_ep_sendv                                   [80] 
+                                                                                                                 
+                         0.260          0.0                  fi_ibv_cq_read                                 [8]  
+[38]   0.21              0.260          0.0                [Import thunk pthread_spin_lock]                 [38] 
+                                                                                                                 
+                         0.220          0.0                  fi_ibv_cq_read                                 [8]  
+[39]   0.18              0.220          0.0                func@0xb110                                      [39] 
+                                                                                                                 
+                         0.210          0.0                  fi_ibv_cq_read                                 [8]  
+[40]   0.17              0.210          0.0                ofi_fastlock_acquire                             [40] 
+                                                                                                                 
+                         0.190          0.0                  rxm_ep_progress_one                            [5]  
+[41]   0.15              0.190          0.0                ofi_fastlock_acquire_noop                        [41] 
+                                                                                                                 
+                         0.0            0.160                main <cycle 2>                                 [2]  
+[42]   0.13              0.0            0.160              PMPI_Init                                        [42] 
+                         0.0            0.120                fi_getinfo <cycle 1>                           [46] 
+                         0.0            0.010                rxm_endpoint                                   [74] 
+                         0.0            0.030                rxm_ep_bind                                    [61] 
+                                                                                                                 
+                         0.160          0.0                  fi_ibv_cq_read                                 [8]  
+[43]   0.13              0.160          0.0                ofi_fastlock_release                             [43] 
+                                                                                                                 
+                         0.150          0.0                  rxm_ep_progress_one                            [5]  
+[44]   0.12              0.150          0.0                ofi_fastlock_release_noop                        [44] 
+                                                                                                                 
+                         0.150          0.0                  fi_ibv_cq_read                                 [8]  
+[45]   0.12              0.150          0.0                [Import thunk pthread_spin_unlock]               [45] 
+                                                                                                                 
+                         0.0            0.120                PMPI_Init                                      [42] 
+                                                             ofi_get_core_info <cycle 1>                    [115]
+[46]   0.1               0.0            0.120              fi_getinfo <cycle 1>                             [46] 
+                         0.0            0.0                  [Unknown stack frame(s)] <cycle 2>             [95] 
+                         0.0            0.020                fi_ibv_getinfo                                 [68] 
+                         0.0            0.090                fi_ini                                         [49] 
+                                                             rxm_getinfo <cycle 1>                          [117]
+                                                                                                                 
+                         0.0            0.120                PMPI_Init                                      [42] 
+[47]   0.1               0.0            0.120              <cycle 1 as a whole>                             [47] 
+                         0.0            0.120                fi_getinfo <cycle 1>                           [46] 
+                         0.0            0.0                  ofi_get_core_info <cycle 1>                    [115]
+                         0.0            0.0                  ofix_getinfo <cycle 1>                         [116]
+                         0.0            0.0                  rxm_getinfo <cycle 1>                          [117]
+                                                                                                                 
+                         0.100          0.0                  send_fuel_assembly_neutrons                    [25] 
+[48]   0.08              0.100          0.0                PMPI_Type_create_indexed_block                   [48] 
+                                                                                                                 
+                         0.0            0.090                fi_getinfo <cycle 1>                           [46] 
+[49]   0.07              0.0            0.090              fi_ini                                           [49] 
+                         0.020          0.030                dlopen                                         [51] 
+                         0.0            0.040                fi_prov_ini                                    [54] 
+                                                                                                                 
+                         0.010          0.0                  generateNeutronVelocityAndEnergy               [30] 
+                         0.060          0.0                  determineAndHandleIfNeutronModeratorCollision  [17] 
+[50]   0.06              0.070          0.0                func@0x401320                                    [50] 
+                                                                                                                 
+                         0.020          0.030                fi_ini                                         [49] 
+[51]   0.04              0.020          0.030              dlopen                                           [51] 
+                         0.010          0.0                  memcmp                                         [112]
+                         0.0            0.010                GetSubprogramsListInImage                      [81] 
+                         0.0            0.010                OS_RWLockAcquireRead                           [94] 
+                                                                                                                 
+                         0.050          0.0                  send_fuel_assembly_neutrons                    [25] 
+[52]   0.04              0.050          0.0                PMPI_Type_commit                                 [52] 
+                                                                                                                 
+                         0.0            0.040                fi_prov_ini                                    [54] 
+[53]   0.03              0.0            0.040              fi_ibv_init_info                                 [53] 
+                         0.010          0.0                  rdma_get_devices                               [110]
+                         0.0            0.030                fi_ibv_alloc_info                              [56] 
+                                                                                                                 
+                         0.0            0.040                fi_ini                                         [49] 
+[54]   0.03              0.0            0.040              fi_prov_ini                                      [54] 
+                         0.0            0.040                fi_ibv_init_info                               [53] 
+                                                                                                                 
+                         0.010          0.0                  fi_ibv_get_device_attrs                        [57] 
+                         0.030          0.0                  fi_ibv_cq_open                                 [60] 
+[55]   0.03              0.040          0.0                ibv_create_cq                                    [55] 
+                                                                                                                 
+                         0.0            0.030                fi_ibv_init_info                               [53] 
+[56]   0.02              0.0            0.030              fi_ibv_alloc_info                                [56] 
+                         0.0            0.030                fi_ibv_get_device_attrs                        [57] 
+                                                                                                                 
+                         0.0            0.030                fi_ibv_alloc_info                              [56] 
+[57]   0.02              0.0            0.030              fi_ibv_get_device_attrs                          [57] 
+                         0.010          0.0                  ibv_create_cq                                  [55] 
+                         0.0            0.020                fi_ibv_find_max_inline                         [67] 
+                                                                                                                 
+                         0.030          0.0                  main <cycle 2>                                 [2]  
+[58]   0.02              0.030          0.0                initialiseNeutrons                               [58] 
+                                                                                                                 
+                         0.010          0.020                manageFuelAssemblyFissions                     [16] 
+[59]   0.02              0.010          0.020              fissionU236                                      [59] 
+                         0.020          0.0                  rand                                           [18] 
+                                                                                                                 
+                         0.0            0.030                rxm_ep_msg_cq_open                             [62] 
+[60]   0.02              0.0            0.030              fi_ibv_cq_open                                   [60] 
+                         0.030          0.0                  ibv_create_cq                                  [55] 
+                                                                                                                 
+                         0.0            0.030                PMPI_Init                                      [42] 
+[61]   0.02              0.0            0.030              rxm_ep_bind                                      [61] 
+                         0.0            0.030                rxm_ep_msg_cq_open                             [62] 
+                                                                                                                 
+                         0.0            0.030                rxm_ep_bind                                    [61] 
+[62]   0.02              0.0            0.030              rxm_ep_msg_cq_open                               [62] 
+                         0.0            0.030                fi_ibv_cq_open                                 [60] 
+                                                                                                                 
+                         0.020          0.0                  main <cycle 2>                                 [2]  
+[63]   0.02              0.020          0.0                calculateNumberActiveNeutrons                    [63] 
+                                                                                                                 
+                         0.020          0.0                  determineAndHandleIfNeutronModeratorCollision  [17] 
+[64]   0.02              0.020          0.0                func@0x4010e0                                    [64] 
+                                                                                                                 
+                         0.0            0.010                rxm_ep_progress_one                            [5]  
+                         0.010          0.0                  [stack] <cycle 2>                              [66] 
+[65]   0.02              0.010          0.010              rxm_cq_handle_comp                               [65] 
+                         0.0            0.010                rxm_handle_recv_comp                           [92] 
+                                                                                                                 
+                                                             [Unknown stack frame(s)] <cycle 2>             [95] 
+                                                             <spontaneous>                                       
+[66]   0.02              0.0            0.020              [stack] <cycle 2>                                [66] 
+                         0.010          0.0                  rxm_cq_handle_comp                             [65] 
+                                                             _start <cycle 2>                               [114]
+                         0.0            0.010                dl_open_worker                                 [98] 
+                                                                                                                 
+                         0.0            0.020                fi_ibv_get_device_attrs                        [57] 
+[67]   0.02              0.0            0.020              fi_ibv_find_max_inline                           [67] 
+                         0.010          0.0                  func@0x1d2c0                                   [101]
+                         0.010          0.0                  ibv_create_qp                                  [104]
+                                                                                                                 
+                         0.0            0.020                fi_getinfo <cycle 1>                           [46] 
+[68]   0.02              0.0            0.020              fi_ibv_getinfo                                   [68] 
+                         0.0            0.010                fi_ibv_create_ep                               [100]
+                         0.0            0.010                ofi_getifaddrs                                 [107]
+                                                                                                                 
+                         0.0            0.010                rxm_buf_reg                                    [73] 
+[69]   0.01              0.0            0.010              fi_ibv_mr_reg                                    [69] 
+                         0.0            0.010                fi_ibv_mr_regv                                 [71] 
+                                                                                                                 
+                         0.0            0.010                fi_ibv_mr_regv                                 [71] 
+[70]   0.01              0.0            0.010              fi_ibv_mr_regattr                                [70] 
+                         0.010          0.0                  ibv_reg_mr                                     [72] 
+                                                                                                                 
+                         0.0            0.010                fi_ibv_mr_reg                                  [69] 
+[71]   0.01              0.0            0.010              fi_ibv_mr_regv                                   [71] 
+                         0.0            0.010                fi_ibv_mr_regattr                              [70] 
+                                                                                                                 
+                         0.010          0.0                  fi_ibv_mr_regattr                              [70] 
+[72]   0.01              0.010          0.0                ibv_reg_mr                                       [72] 
+                                                                                                                 
+                         0.0            0.010                util_buf_grow                                  [75] 
+[73]   0.01              0.0            0.010              rxm_buf_reg                                      [73] 
+                         0.0            0.010                fi_ibv_mr_reg                                  [69] 
+                                                                                                                 
+                         0.0            0.010                PMPI_Init                                      [42] 
+[74]   0.01              0.0            0.010              rxm_endpoint                                     [74] 
+                         0.0            0.010                util_buf_pool_create_ex                        [76] 
+                                                                                                                 
+                         0.0            0.010                util_buf_pool_create_ex                        [76] 
+[75]   0.01              0.0            0.010              util_buf_grow                                    [75] 
+                         0.0            0.010                rxm_buf_reg                                    [73] 
+                                                                                                                 
+                         0.0            0.010                rxm_endpoint                                   [74] 
+[76]   0.01              0.0            0.010              util_buf_pool_create_ex                          [76] 
+                         0.0            0.010                util_buf_grow                                  [75] 
+                                                                                                                 
+                         0.0            0.010                rxm_ep_send_common                             [79] 
+[77]   0.01              0.0            0.010              fi_ibv_msg_ep_send                               [77] 
+                         0.010          0.0                  func@0x18500                                   [78] 
+                                                                                                                 
+                         0.010          0.0                  fi_ibv_msg_ep_send                             [77] 
+[78]   0.01              0.010          0.0                func@0x18500                                     [78] 
+                                                                                                                 
+                         0.0            0.010                rxm_ep_sendv                                   [80] 
+[79]   0.01              0.0            0.010              rxm_ep_send_common                               [79] 
+                         0.0            0.010                fi_ibv_msg_ep_send                             [77] 
+                                                                                                                 
+                         0.0            0.010                PMPI_Recv                                      [37] 
+[80]   0.01              0.0            0.010              rxm_ep_sendv                                     [80] 
+                         0.0            0.010                rxm_ep_send_common                             [79] 
+                                                                                                                 
+                         0.0            0.010                dlopen                                         [51] 
+[81]   0.01              0.0            0.010              GetSubprogramsListInImage                        [81] 
+                         0.0            0.010                LoadDwarfForFile                               [82] 
+                                                                                                                 
+                         0.0            0.010                GetSubprogramsListInImage                      [81] 
+[82]   0.01              0.0            0.010              LoadDwarfForFile                                 [82] 
+                         0.0            0.010                llvm::object::ObjectFile::createObjectFile     [87] 
+                                                                                                                 
+                         0.010          0.0                  OS_SyscallDo                                   [85] 
+[83]   0.01              0.010          0.0                OS_BARESYSCALL_DoCallAsmIntel64Linux             [83] 
+                                                                                                                 
+                         0.0            0.010                open                                           [89] 
+[84]   0.01              0.0            0.010              OS_OpenFD                                        [84] 
+                         0.0            0.010                OS_SyscallDo                                   [85] 
+                                                                                                                 
+                         0.0            0.010                OS_OpenFD                                      [84] 
+[85]   0.01              0.0            0.010              OS_SyscallDo                                     [85] 
+                         0.010          0.0                  OS_BARESYSCALL_DoCallAsmIntel64Linux           [83] 
+                                                                                                                 
+                         0.0            0.010                llvm::object::ObjectFile::createObjectFile     [87] 
+[86]   0.01              0.0            0.010              llvm::MemoryBuffer::getFile                      [86] 
+                         0.0            0.010                llvm::sys::fs::openFileForRead                 [88] 
+                                                                                                                 
+                         0.0            0.010                LoadDwarfForFile                               [82] 
+[87]   0.01              0.0            0.010              llvm::object::ObjectFile::createObjectFile       [87] 
+                         0.0            0.010                llvm::MemoryBuffer::getFile                    [86] 
+                                                                                                                 
+                         0.0            0.010                llvm::MemoryBuffer::getFile                    [86] 
+[88]   0.01              0.0            0.010              llvm::sys::fs::openFileForRead                   [88] 
+                         0.0            0.010                open                                           [89] 
+                                                                                                                 
+                         0.0            0.010                llvm::sys::fs::openFileForRead                 [88] 
+[89]   0.01              0.0            0.010              open                                             [89] 
+                         0.0            0.010                OS_OpenFD                                      [84] 
+                                                                                                                 
+                         0.0            0.010                rxm_handle_recv_comp                           [92] 
+[90]   0.01              0.0            0.010              rxm_cq_handle_rx_buf                             [90] 
+                         0.0            0.010                rxm_finish_recv                                [91] 
+                                                                                                                 
+                         0.0            0.010                rxm_cq_handle_rx_buf                           [90] 
+[91]   0.01              0.0            0.010              rxm_finish_recv                                  [91] 
+                         0.010          0.0                  pthread_spin_lock                              [9]  
+                                                                                                                 
+                         0.0            0.010                rxm_cq_handle_comp                             [65] 
+[92]   0.01              0.0            0.010              rxm_handle_recv_comp                             [92] 
+                         0.0            0.010                rxm_cq_handle_rx_buf                           [90] 
+                                                                                                                 
+                         0.010          0.0                  OS_RWLockAcquireRead                           [94] 
+[93]   0.01              0.010          0.0                OS_MutexIsLocked                                 [93] 
+                                                                                                                 
+                         0.0            0.010                dlopen                                         [51] 
+[94]   0.01              0.0            0.010              OS_RWLockAcquireRead                             [94] 
+                         0.010          0.0                  OS_MutexIsLocked                               [93] 
+                                                                                                                 
+                         0.0            0.0                  fi_getinfo <cycle 1>                           [46] 
+                                                             ofi_cq_progress <cycle 2>                      [4]  
+[95]   0.01              0.010          0.0                [Unknown stack frame(s)] <cycle 2>               [95] 
+                                                             [stack] <cycle 2>                              [66] 
+                                                                                                                 
+                         0.010          0.0                  main <cycle 2>                                 [2]  
+[96]   0.01              0.010          0.0                __libc_malloc                                    [96] 
+                                                                                                                 
+                         0.010          0.0                  main <cycle 2>                                 [2]  
+[97]   0.01              0.010          0.0                __read                                           [97] 
+                                                                                                                 
+                         0.0            0.010                [stack] <cycle 2>                              [66] 
+[98]   0.01              0.0            0.010              dl_open_worker                                   [98] 
+                         0.0            0.010                memcpy                                         [105]
+                                                                                                                 
+                         0.010          0.0                  parseConfiguration                             [108]
+[99]   0.01              0.010          0.0                fgets                                            [99] 
+                                                                                                                 
+                         0.0            0.010                fi_ibv_getinfo                                 [68] 
+[100]  0.01              0.0            0.010              fi_ibv_create_ep                                 [100]
+                         0.010          0.0                  rdma_create_ep                                 [109]
+                                                                                                                 
+                         0.010          0.0                  fi_ibv_find_max_inline                         [67] 
+[101]  0.01              0.010          0.0                func@0x1d2c0                                     [101]
+                                                                                                                 
+                         0.0            0.010                main <cycle 2>                                 [2]  
+[102]  0.01              0.0            0.010              generateReport                                   [102]
+                         0.010          0.0                  PMPI_Recv                                      [37] 
+                                                                                                                 
+                         0.010          0.0                  ofi_getifaddrs                                 [107]
+[103]  0.01              0.010          0.0                getifaddrs                                       [103]
+                                                                                                                 
+                         0.010          0.0                  fi_ibv_find_max_inline                         [67] 
+[104]  0.01              0.010          0.0                ibv_create_qp                                    [104]
+                                                                                                                 
+                         0.0            0.010                dl_open_worker                                 [98] 
+[105]  0.01              0.0            0.010              memcpy                                           [105]
+                         0.010          0.0                  memmove                                        [106]
+                                                                                                                 
+                         0.010          0.0                  memcpy                                         [105]
+[106]  0.01              0.010          0.0                memmove                                          [106]
+                                                                                                                 
+                         0.0            0.010                fi_ibv_getinfo                                 [68] 
+[107]  0.01              0.0            0.010              ofi_getifaddrs                                   [107]
+                         0.010          0.0                  getifaddrs                                     [103]
+                                                                                                                 
+                         0.0            0.010                main <cycle 2>                                 [2]  
+[108]  0.01              0.0            0.010              parseConfiguration                               [108]
+                         0.010          0.0                  fgets                                          [99] 
+                                                                                                                 
+                         0.010          0.0                  fi_ibv_create_ep                               [100]
+[109]  0.01              0.010          0.0                rdma_create_ep                                   [109]
+                                                                                                                 
+                         0.010          0.0                  fi_ibv_init_info                               [53] 
+[110]  0.01              0.010          0.0                rdma_get_devices                                 [110]
+                                                                                                                 
+                         0.010          0.0                  main <cycle 2>                                 [2]  
+[111]  0.01              0.010          0.0                sscanf                                           [111]
+                                                                                                                 
+                         0.010          0.0                  dlopen                                         [51] 
+[112]  0.01              0.010          0.0                memcmp                                           [112]
+                                                                                                                 
+                                                             _start <cycle 2>                               [114]
+[113]  0.0               0.0            0.0                __libc_start_main <cycle 2>                      [113]
+                                                             main <cycle 2>                                 [2]  
+                                                                                                                 
+                                                             [stack] <cycle 2>                              [66] 
+[114]  0.0               0.0            0.0                _start <cycle 2>                                 [114]
+                                                             __libc_start_main <cycle 2>                    [113]
+                                                                                                                 
+                                                             ofix_getinfo <cycle 1>                         [116]
+[115]  0.0               0.0            0.0                ofi_get_core_info <cycle 1>                      [115]
+                                                             fi_getinfo <cycle 1>                           [46] 
+                                                                                                                 
+                                                             rxm_getinfo <cycle 1>                          [117]
+[116]  0.0               0.0            0.0                ofix_getinfo <cycle 1>                           [116]
+                                                             ofi_get_core_info <cycle 1>                    [115]
+                                                                                                                 
+                                                             fi_getinfo <cycle 1>                           [46] 
+[117]  0.0               0.0            0.0                rxm_getinfo <cycle 1>                            [117]
+                                                             ofix_getinfo <cycle 1>                         [116]
+                                                                                                                 
+
+
+Index by function name
+
+Index  Function                                     
+-----  ---------------------------------------------
+[81]   GetSubprogramsListInImage                    
+[82]   LoadDwarfForFile                             
+[10]   MeVToVelocity                                
+[83]   OS_BARESYSCALL_DoCallAsmIntel64Linux         
+[93]   OS_MutexIsLocked                             
+[84]   OS_OpenFD                                    
+[94]   OS_RWLockAcquireRead                         
+[85]   OS_SyscallDo                                 
+[42]   PMPI_Init                                    
+[21]   PMPI_Issend                                  
+[37]   PMPI_Recv                                    
+[52]   PMPI_Type_commit                             
+[48]   PMPI_Type_create_indexed_block               
+[6]    PMPI_Wait                                    
+[31]   [Import thunk pthread_spin_lock]             
+[38]   [Import thunk pthread_spin_lock]             
+[32]   [Import thunk pthread_spin_unlock]           
+[45]   [Import thunk pthread_spin_unlock]           
+[95]   [Unknown stack frame(s)]                     
+[66]   [stack]                                      
+[96]   __libc_malloc                                
+[113]  __libc_start_main                            
+[97]   __read                                       
+[114]  _start                                       
+[63]   calculateNumberActiveNeutrons                
+[27]   createNeutronsFromFission                    
+[23]   determineAndHandleIfNeutronFuelCollision     
+[17]   determineAndHandleIfNeutronModeratorCollision
+[24]   determineNeutronModeratorScattering          
+[15]   determineOutbound.constprop.2                
+[98]   dl_open_worker                               
+[51]   dlopen                                       
+[35]   expf32x                                      
+[99]   fgets                                        
+[46]   fi_getinfo                                   
+[56]   fi_ibv_alloc_info                            
+[60]   fi_ibv_cq_open                               
+[8]    fi_ibv_cq_read                               
+[100]  fi_ibv_create_ep                             
+[67]   fi_ibv_find_max_inline                       
+[57]   fi_ibv_get_device_attrs                      
+[68]   fi_ibv_getinfo                               
+[53]   fi_ibv_init_info                             
+[69]   fi_ibv_mr_reg                                
+[70]   fi_ibv_mr_regattr                            
+[71]   fi_ibv_mr_regv                               
+[77]   fi_ibv_msg_ep_send                           
+[49]   fi_ini                                       
+[54]   fi_prov_ini                                  
+[59]   fissionU236                                  
+[78]   func@0x18500                                 
+[101]  func@0x1d2c0                                 
+[64]   func@0x4010e0                                
+[50]   func@0x401320                                
+[12]   func@0xa620                                  
+[39]   func@0xb110                                  
+[30]   generateNeutronVelocityAndEnergy             
+[102]  generateReport                               
+[103]  getifaddrs                                   
+[55]   ibv_create_cq                                
+[104]  ibv_create_qp                                
+[72]   ibv_reg_mr                                   
+[29]   initialiseNeutron                            
+[58]   initialiseNeutrons                           
+[22]   interactWithFuelAssembly.constprop.7         
+[14]   interactWithModerator.constprop.3            
+[13]   interactWithReactor                          
+[86]   llvm::MemoryBuffer::getFile                  
+[87]   llvm::object::ObjectFile::createObjectFile   
+[88]   llvm::sys::fs::openFileForRead               
+[2]    main                                         
+[16]   manageFuelAssemblyFissions                   
+[20]   manageFuelAssemblyInteractions               
+[112]  memcmp                                       
+[105]  memcpy                                       
+[106]  memmove                                      
+[4]    ofi_cq_progress                              
+[36]   ofi_cq_read                                  
+[11]   ofi_cq_readfrom                              
+[34]   ofi_fastlock_acquire                         
+[40]   ofi_fastlock_acquire                         
+[41]   ofi_fastlock_acquire_noop                    
+[33]   ofi_fastlock_release                         
+[43]   ofi_fastlock_release                         
+[44]   ofi_fastlock_release_noop                    
+[115]  ofi_get_core_info                            
+[107]  ofi_getifaddrs                               
+[116]  ofix_getinfo                                 
+[89]   open                                         
+[108]  parseConfiguration                           
+[28]   pthread_spin_init                            
+[9]    pthread_spin_lock                            
+[18]   rand                                         
+[109]  rdma_create_ep                               
+[110]  rdma_get_devices                             
+[19]   rebuildIndex                                 
+[73]   rxm_buf_reg                                  
+[65]   rxm_cq_handle_comp                           
+[90]   rxm_cq_handle_rx_buf                         
+[74]   rxm_endpoint                                 
+[61]   rxm_ep_bind                                  
+[62]   rxm_ep_msg_cq_open                           
+[5]    rxm_ep_progress_one                          
+[79]   rxm_ep_send_common                           
+[80]   rxm_ep_sendv                                 
+[91]   rxm_finish_recv                              
+[117]  rxm_getinfo                                  
+[92]   rxm_handle_recv_comp                         
+[25]   send_fuel_assembly_neutrons                  
+[111]  sscanf                                       
+[7]    updateNeutronPosition                        
+[3]    updateNeutrons                               
+[26]   updateReactorCore                            
+[75]   util_buf_grow                                
+[76]   util_buf_pool_create_ex                      
+[47]   <cycle 1>                                    
+[1]    <cycle 2>                                    
