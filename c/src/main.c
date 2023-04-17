@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 
     sender = 1;
     receiver = 0;
-    num_rolling_msgs = 2; // Note: will have to add 1 if doesn't divide, or add extra neutrons to last msg
+    num_rolling_msgs = 100; // Note: will have to add 1 if doesn't divide, or add extra neutrons to last msg
 
     MPI_SPARSE_NEUTRONS = (MPI_Datatype *) malloc(sizeof(MPI_Datatype)*num_rolling_msgs);
     neutrons_send_request = (MPI_Request *) malloc(sizeof(MPI_Request)*num_rolling_msgs);
@@ -310,7 +310,8 @@ int main(int argc, char *argv[])
             }
         }
 
-        if ( (i+1)%iterations_per_msg == 0) // Note: lots of attention here, this loop is very different from the receiving one, so it has a significant deadlock risk
+        if ( ((i+1)%iterations_per_msg == 0 && (i+1)!=(num_rolling_msgs*iterations_per_msg)) || ((i+1)==configuration->max_neutrons) ) // Note: lots of attention here, this loop is very different from the receiving one, so it has a significant deadlock risk
+//        if ( (i+1)%iterations_per_msg == 0 ) // Note: lots of attention here, this loop is very different from the receiving one, so it has a significant deadlock risk
         {
             MPI_Status status;
             if(msg_num>0) MPI_Wait(&neutrons_send_request[msg_num-1],&status);
