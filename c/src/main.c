@@ -73,6 +73,7 @@ void createNeutronsFromFission(struct channel_struct *channel);
 unsigned long int calculateNumberActiveNeutrons(struct simulation_configuration_struct *);
 
 void send_fuel_assembly_neutrons(int count, int msg_num);
+void sendGeneratedNeutrons(int initial_pellets);
 
 // MPI variables
 int size, rank;
@@ -86,7 +87,7 @@ MPI_Request *neutrons_recv_request;
 
 // Temporary variables
 
-unsigned long int global_event_count;
+unsigned long int global_event_count, global_step_counter, global_fuel_neutrons;
 unsigned long int local_max_neutrons;
 /*long*/ int *fuel_assembly_neutrons_index; // Note: I have to address this datatype issue
 int fuelHandlerProc;
@@ -95,7 +96,6 @@ int max_fission_events;
 int num_rolling_msgs;
 /*long*/ int iterations_per_msg;
 struct fission_event *fission_array;
-
 
 
 
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
     neutronHandler = rank>0;
     fuelHandler = rank==0;
     fuelHandlerProc = 0;
-    num_rolling_msgs = 10; // Note: will have to add 1 if doesn't divide, or add extra neutrons to last msg
+    num_rolling_msgs = 1; // Note: will have to add 1 if doesn't divide, or add extra neutrons to last msg
 
     MPI_SPARSE_NEUTRONS = (MPI_Datatype *) malloc(sizeof(MPI_Datatype)*num_rolling_msgs);
     if(neutronHandler) neutrons_send_request = (MPI_Request *) malloc(sizeof(MPI_Request)*num_rolling_msgs);
@@ -204,7 +204,8 @@ int main(int argc, char *argv[])
     time_t t;
 
     // Seed the random number generator
-    srand((unsigned)(time(&t)));
+//    srand((unsigned)(time(&t)));
+    srand(0);
     struct timeval start_time;
 
 
@@ -234,15 +235,25 @@ int main(int argc, char *argv[])
 
 //    printf("Max int: %d. Num neutrons: %ld ",INT_MAX,configuration.max_neutrons);
 
+    global_fuel_neutrons = 0;
+    global_step_counter = 0;
     for (int i = 0; i < configuration.num_timesteps; i++)
     {
         // Progress in timesteps
         step(configuration.dt, &configuration);
 
+        global_step_counter ++;
+
         if (i > 0 && i % configuration.display_progess_frequency == 0)
         {
             if(neutronHandler) calculateNumberActiveNeutrons(&configuration);
             if(fuelHandler) generateReport(configuration.dt, i, &configuration, start_time);
+//            unsigned long int temp;
+//            MPI_Barrier(world);
+//            if(fuelHandler) printf("%d----------------------------------------------\n",global_step_counter);
+//            if(neutronHandler) printf("Rank %d, %d neutrons in fuel channel\n",rank,global_fuel_neutrons);
+//            MPI_Reduce(&global_fuel_neutrons,&temp,1,MPI_UNSIGNED_LONG,MPI_SUM,0,world);
+//            if(fuelHandler) printf("-- Global number %ld\n",temp);
         }
 
         if (i > 0 && i % configuration.write_reactor_state_frequency == 0)
@@ -350,6 +361,9 @@ int main(int argc, char *argv[])
             if(msg_num>0) MPI_Wait(&neutrons_recv_request[msg_num-1],&status);
             send_fuel_assembly_neutrons(num_fuel_interacting,msg_num);
             msg_num ++;
+//            printf("Global counter: %d\n",global_step_counter);
+
+            global_fuel_neutrons = num_fuel_interacting;
             num_fuel_interacting = 0;
 
         }
@@ -383,8 +397,10 @@ int main(int argc, char *argv[])
  **/
 /*static*/ void updateNeutronGenerator(int dt, struct channel_struct *channel, struct simulation_configuration_struct *configuration)
 {
+//    unsigned long int availableNeutrons = currentNeutronIndex;
+//    MPI_Ssend(&currentNeutronIndex,1,MPI_UNSIGNED_LONG,fuelHandlerProc,2,world);
+
     unsigned long int number_new_neutrons = getNumberNeutronsFromGenerator(channel->contents.neutron_generator.weight, dt);
-    number_new_neutrons = parallel_rescale_inv(number_new_neutrons,1,false,false);
 
     for (int i = 0; i < number_new_neutrons; i++)
     {
@@ -394,6 +410,42 @@ int main(int argc, char *argv[])
         unsigned long int index = neutron_index[currentNeutronIndex];
         initialiseNeutron(&(neutrons[index]), channel, (double)(rand() / ((double)(RAND_MAX / configuration->size_z))));
     }
+
+}
+
+void generateNeutrons(int dt, struct channel_struct *channel, struct simulation_configuration_struct *configuration)
+{
+
+    int num_remotes = size-1;
+    unsigned long int *available_neutrons = (unsigned long int *) malloc(sizeof(unsigned long int)*size);
+
+//    MPI_Request gather_request;
+
+    unsigned long int temp = 0;
+    MPI_Gather(&temp,1,MPI_UNSIGNED_LONG,&available_neutrons,1,MPI_UNSIGNED_LONG,fuelHandlerProc,world);
+
+    unsigned long int number_new_neutrons = getNumberNeutronsFromGenerator(channel->contents.neutron_generator.weight, dt);
+    unsigned long int total_available = 0;
+    unsigned long int total_allocated = 0;
+
+    for(int i=0; i<size; i++)
+    {
+        total_available += available_neutrons[i-1];
+    }
+
+    for(int i=0; i<size && total_available!=0; i++)
+    {
+        available_neutrons[i-1] = (unsigned long int)( (double)(available_neutrons[i-1]) / total_available * number_new_neutrons);
+        total_allocated = available_neutrons[i-1];
+    }
+
+    available_neutrons[size-1] += number_new_neutrons - total_allocated; // Note: assumes last proc is not fuelHandler
+
+    MPI_Scatter(&available_neutrons,1,MPI_UNSIGNED_LONG,&temp,1,MPI_UNSIGNED_LONG,fuelHandlerProc,world);
+
+    free(available_neutrons);
+
+    //MPI_Wait();
 
 }
 
@@ -668,6 +720,8 @@ int main(int argc, char *argv[])
         if (neutrons[i].active)
             activeNeutrons++;
     }
+
+//    printf("Rank %d with %ld active",rank,activeNeutrons);
 
     MPI_Reduce(&activeNeutrons,&temp,1,MPI_UNSIGNED_LONG,MPI_SUM,fuelHandlerProc,world);
 
@@ -957,6 +1011,14 @@ void executeFissions(int dt, struct channel_struct *channel)
 
     }
 
+    sendGeneratedNeutrons(initial_pellets); // Note: this assumes global fission array
+
+}
+
+
+void sendGeneratedNeutrons(int initial_pellets)
+{
+
     int num_receivers = size-1;
 
     int events_per_proc = initial_pellets/num_receivers;
@@ -995,6 +1057,11 @@ void manageFuelAssemblyFissions(int dt, struct simulation_configuration_struct *
             {
                 executeFissions(dt,&(reactor_core[i][j]));
             }
+//            if (reactor_core[i][j].type == NEUTRON_GENERATOR)
+//            {
+//                generateNeutrons(dt, &(reactor_core[i][j]), configuration);
+//            }
+
         }
     }
 }
