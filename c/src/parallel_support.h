@@ -23,22 +23,28 @@ struct fission_event {
 
 
 /*static*/ void step(int, struct simulation_configuration_struct *);
-/*static*/ void generateReport(int, int, struct simulation_configuration_struct *, struct timeval);
-/*static*/ void createNewNeutrons(int, struct simulation_configuration_struct *);
-/*static*/ void updateNeutrons(int, struct simulation_configuration_struct *);
-/*static*/ void updateFuelAssembly(int, struct channel_struct *);
-/*static*/ void updateNeutronGenerator(int, struct channel_struct *, struct simulation_configuration_struct *);
-/*static*/ void createNeutrons(int, struct channel_struct *, double);
-/*static*/ void initialiseReactorCore(struct simulation_configuration_struct *);
-/*static*/ void initialiseNeutrons(struct simulation_configuration_struct *);
-/*static*/ double getControlRodLoweredToLevel(struct simulation_configuration_struct *, int, int);
-/*static*/ void writeReactorState(struct simulation_configuration_struct *, int, char *);
-/*static*/ void getFuelAssemblyChemicalContents(struct fuel_assembly_struct *, double *);
-/*static*/ void clearReactorStateFile(char *);
-/*static*/ struct channel_struct *locateChannelFromPosition(double, double, struct simulation_configuration_struct *);
-/*static*/ unsigned long int getTotalNumberFissions(struct simulation_configuration_struct *);
-/*static*/ unsigned long int getNumberActiveNeutrons(struct simulation_configuration_struct *);
-/*static*/ double getElapsedTime(struct timeval);
+static void generateReport(int, int, struct simulation_configuration_struct *, struct timeval);
+static void createNewNeutrons(int, struct simulation_configuration_struct *);
+static void updateNeutrons(int, struct simulation_configuration_struct *);
+static void updateFuelAssembly(int, struct channel_struct *);
+static void updateNeutronGenerator(int, struct channel_struct *, struct simulation_configuration_struct *);
+
+void createNeutrons(int, struct channel_struct *, double);
+
+static void initialiseReactorCore(struct simulation_configuration_struct *);
+static void initialiseNeutrons(struct simulation_configuration_struct *);
+static double getControlRodLoweredToLevel(struct simulation_configuration_struct *, int, int);
+static void writeReactorState(struct simulation_configuration_struct *, int, char *);
+static void getFuelAssemblyChemicalContents(struct fuel_assembly_struct *, double *);
+static void clearReactorStateFile(char *);
+
+struct channel_struct *locateChannelFromPosition(double, double, struct simulation_configuration_struct *);
+
+static unsigned long int getTotalNumberFissions(struct simulation_configuration_struct *);
+
+unsigned long int getNumberActiveNeutrons(struct simulation_configuration_struct *);
+
+static double getElapsedTime(struct timeval);
 
 void updateNeutronPosition(struct neutron_struct *neutron, int dt);
 void interactWithFuelAssembly(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i);
@@ -50,12 +56,12 @@ void rebuildIndex(struct simulation_configuration_struct *configuration);
 
 void commit_simple_neutron_datatype(void);
 void commit_fission_event_datatype(void);
-void commit_sparse_neutrons_datatype(int count, MPI_Datatype *sparse_neutrons);
+static void commit_sparse_neutrons_datatype(int count, MPI_Datatype *sparse_neutrons);
 void commit_strided_fission_datatype(int);
 unsigned long int parallel_rescale_inv(unsigned long int number, int num_ignored_processes, bool get_highest, bool get_total);
 
-void manageFuelAssemblyInteractions(struct simulation_configuration_struct *configuration);
-void executeFissions(int dt, struct channel_struct *channel);
+static void manageFuelAssemblyInteractions(struct simulation_configuration_struct *configuration);
+static void executeFissions(int dt, struct channel_struct *channel);
 
 void updateFuelChannels(int dt, struct simulation_configuration_struct *configuration);
 void createNeutronsFromFission(struct channel_struct *channel);

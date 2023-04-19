@@ -35,14 +35,19 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(world,&rank);
     MPI_Comm_size(world,&size);
 
-    neutronHandler = rank>0;
-    fuelHandler = rank==0;
-    fuelHandlerProc = 0;
-    num_rolling_msgs = 1; // Note: will have to add 1 if doesn't divide, or add extra neutrons to last msg
+    neutronHandler = rank>0 && size>1; // Higher ranks distribute the neutrons among themselves
+    fuelHandler = rank==0 && size>1; // Rank 0 handles the fuel channels
+    bool serial = size==1;
 
+    fuelHandlerProc = 0; // Rank 0 is set as the fuel handler (can't really be changed, some parts of the code assume 0)
+    num_rolling_msgs = 15; // How many iterations to distribute messages into
+
+    // Each neutron handler process will need one datatype, one send request and one recv request for every message they are going to send.
     MPI_SPARSE_NEUTRONS = (MPI_Datatype *) malloc(sizeof(MPI_Datatype)*num_rolling_msgs);
     if(neutronHandler) neutrons_send_request = (MPI_Request *) malloc(sizeof(MPI_Request)*num_rolling_msgs);
     if(neutronHandler) neutrons_recv_request = (MPI_Request *) malloc(sizeof(MPI_Request)*num_rolling_msgs);
+
+    // The fuel handler needs one of each request per process to handle multiple communications at once
     if(fuelHandler) neutrons_send_request = (MPI_Request *) malloc(sizeof(MPI_Request)*(size-1));
     if(fuelHandler) neutrons_recv_request = (MPI_Request *) malloc(sizeof(MPI_Request)*(size-1));
 
@@ -57,8 +62,8 @@ int main(int argc, char *argv[])
     time_t t;
 
     // Seed the random number generator
-//    srand((unsigned)(time(&t)));
-    srand(0);
+    srand((unsigned)(time(&t)));
+//    srand(0); // For correctness testing
     struct timeval start_time;
 
 
@@ -66,7 +71,11 @@ int main(int argc, char *argv[])
     struct simulation_configuration_struct configuration;
     parseConfiguration(argv[1], &configuration);
 
-
+    if(configuration.max_neutrons > INT_MAX && (double)(configuration.max_neutrons)/INT_MAX > num_rolling_msgs)
+    {
+         // This change allows for mpi communications to work for large numbers of neutrons, as mpi only handles int-value sized messages
+        num_rolling_msgs = (int) ((double)(configuration.max_neutrons)/INT_MAX) + 1;
+    }
 
     local_max_neutrons = parallel_rescale_inv(configuration.max_neutrons,1,fuelHandler,false);
     iterations_per_msg = local_max_neutrons / num_rolling_msgs;
@@ -77,17 +86,16 @@ int main(int argc, char *argv[])
     commit_simple_neutron_datatype();
     commit_fission_event_datatype();
 
-
     // Empty the file we will use to store the reactor state
     clearReactorStateFile(argv[2]);
-    if(fuelHandler) printf("Simulation configured for reactor core of size %dm by %dm by %dm, timesteps=%d dt=%dns\n", configuration.size_x,
+    if(fuelHandler || serial) printf("Simulation configured for reactor core of size %dm by %dm by %dm, timesteps=%d dt=%dns\n", configuration.size_x,
                        configuration.size_y, configuration.size_z, configuration.num_timesteps, configuration.dt);
-    if(fuelHandler) printf("------------------------------------------------------------------------------------------------\n");
+    if(fuelHandler || serial) printf("------------------------------------------------------------------------------------------------\n");
     gettimeofday(&start_time, NULL); // Record simulation start time (for runtime statistics)
 
 //    printf("Max int: %d. Num neutrons: %ld ",INT_MAX,configuration.max_neutrons);
 
-    for (int i = 0; i < configuration.num_timesteps; i++)
+    for (int i = 0; i < configuration.num_timesteps && !serial; i++)
     {
         // Progress in timesteps
         step(configuration.dt, &configuration);
@@ -105,13 +113,30 @@ int main(int argc, char *argv[])
 
     }
 
+    for (int i = 0; i < configuration.num_timesteps && serial; i++)
+    {
+        // Progress in timesteps
+        serial_step(configuration.dt, &configuration);
+
+        if (i > 0 && i % configuration.display_progess_frequency == 0)
+        {
+            generateReport(configuration.dt, i, &configuration, start_time);
+        }
+
+        if (i > 0 && i % configuration.write_reactor_state_frequency == 0)
+        {
+            writeReactorState(&configuration, i, argv[2]);
+        }
+
+    }
+
 
     // Now we are finished write some summary information
     unsigned long int num_fissions = getTotalNumberFissions(&configuration);
     double mev = getMeVFromFissions(num_fissions);
     double joules = getJoulesFromMeV(mev);
-    if(fuelHandler) printf("------------------------------------------------------------------------------------------------\n");
-    if(fuelHandler) printf("Model completed after %d timesteps\nTotal model time: %f secs\nTotal fissions: %ld releasing %e MeV and %e Joules\nTotal runtime: %.2f seconds\n",
+    if(fuelHandler || serial) printf("------------------------------------------------------------------------------------------------\n");
+    if(fuelHandler || serial) printf("Model completed after %d timesteps\nTotal model time: %f secs\nTotal fissions: %ld releasing %e MeV and %e Joules\nTotal runtime: %.2f seconds\n",
                        configuration.num_timesteps, (NS_AS_SEC * configuration.dt) * configuration.num_timesteps, num_fissions, mev, joules, getElapsedTime(start_time));
 
     MPI_Finalize();
@@ -122,67 +147,23 @@ int main(int argc, char *argv[])
 /**
  * Writes a short report around the current state of the simulation to stdout
  **/
-/*static*/ void generateReport(int dt, int timestep, struct simulation_configuration_struct *configuration, struct timeval start_time)
+static void generateReport(int dt, int timestep, struct simulation_configuration_struct *configuration, struct timeval start_time)
 {
-    unsigned long int num_active_neutrons = getNumberActiveNeutrons(configuration);
+    unsigned long int num_active_neutrons;
+    if(!serial) num_active_neutrons = getNumberActiveNeutrons(configuration);
+    if(serial) num_active_neutrons = serial_getNumberActiveNeutrons(configuration);
     unsigned long int num_fissions = getTotalNumberFissions(configuration);
     double mev = getMeVFromFissions(num_fissions);
     double joules = getJoulesFromMeV(mev);
     printf("Timestep: %d, model time is %e secs, current runtime is %.2f seconds. %ld active neutrons, %ld fissions, releasing %e MeV and %e Joules\n", timestep,
            (NS_AS_SEC * dt) * timestep, getElapsedTime(start_time), num_active_neutrons, num_fissions, mev, joules);
 }
-//
-///**
-// * Update the state of the reactor core at the current timestep, which will update the state
-// * of each fuel assembly and neutron generator.
-// **/
-///*static*/ void updateReactorCore(int dt, struct simulation_configuration_struct *configuration)
-//{
-//    for (int i = 0; i < configuration->channels_x; i++)
-//    {
-//        for (int j = 0; j < configuration->channels_y; j++)
-//        {
-//            if (reactor_core[i][j].type == FUEL_ASSEMBLY)
-//            {
-//                createNeutronsFromFission(&(reactor_core[i][j]));
-//            }
-//
-//            if (reactor_core[i][j].type == NEUTRON_GENERATOR)
-//            {
-//                updateNeutronGenerator(dt, &(reactor_core[i][j]), configuration);
-//            }
-//        }
-//    }
-//}
-
-
-//
-///**
-// * Update the state of a neutron generator for a timestep, generating the required
-// * number of neutrons
-// **/
-///*static*/ void updateNeutronGenerator(int dt, struct channel_struct *channel, struct simulation_configuration_struct *configuration)
-//{
-//    unsigned long int number_new_neutrons = getNumberNeutronsFromGenerator(channel->contents.neutron_generator.weight, dt);
-//    number_new_neutrons = parallel_rescale_inv(number_new_neutrons,1,false,false);
-//
-//    for (int i = 0; i < number_new_neutrons; i++)
-//    {
-//        if (currentNeutronIndex == 0)
-//            break;
-//        currentNeutronIndex--;
-//        unsigned long int index = neutron_index[currentNeutronIndex];
-//        initialiseNeutron(&(neutrons[index]), channel, (double)(rand() / ((double)(RAND_MAX / configuration->size_z))));
-//    }
-//
-//}
-
 
 /**
  * Creates a specific number of neutrons that originate in a specific reactor channel
  * at a specific height (z) location
  **/
-/*static*/ void createNeutrons(int num_neutrons, struct channel_struct *channel, double z)
+void createNeutrons(int num_neutrons, struct channel_struct *channel, double z)
 {
     for (int k = 0; k < num_neutrons; k++)
     {
@@ -197,7 +178,7 @@ int main(int argc, char *argv[])
 /**
  * Initialises the reactor core at the start of the simulation from the configuration
  **/
-/*static*/ void initialiseReactorCore(struct simulation_configuration_struct *simulation_configuration)
+static void initialiseReactorCore(struct simulation_configuration_struct *simulation_configuration)
 {
 
     max_fission_events = simulation_configuration->size_z / FUEL_PELLET_DEPTH;
@@ -312,7 +293,7 @@ int main(int argc, char *argv[])
  * is read and currentNeutronIndex decremented. When deactivating a neutron the index of the newly freed
  * location is added to the next element of neutron_index and currentNeutronIndex is incremented
  **/
-/*static*/ void initialiseNeutrons(struct simulation_configuration_struct *simulation_configuration)
+static void initialiseNeutrons(struct simulation_configuration_struct *simulation_configuration)
 {
 
     neutrons = (struct neutron_struct *)malloc(sizeof(struct neutron_struct) * local_max_neutrons);
@@ -334,7 +315,7 @@ int main(int argc, char *argv[])
  * For a control rod channel will return the absolute z height position that this has been lowered to based upon
  * the percentage insertion that was configured
  **/
-/*static*/ double getControlRodLoweredToLevel(struct simulation_configuration_struct *simulation_configuration, int channel_x, int channel_y)
+static double getControlRodLoweredToLevel(struct simulation_configuration_struct *simulation_configuration, int channel_x, int channel_y)
 {
     int rodConfigurationIndex = findControlRodConfiguration(simulation_configuration, channel_x, channel_y);
     if (rodConfigurationIndex < 0)
@@ -348,7 +329,7 @@ int main(int argc, char *argv[])
 /**
  * Writes out the current state of the reactor at this timestep to a file
  **/
-/*static*/ void writeReactorState(struct simulation_configuration_struct *configuration, int timestep, char *outfile)
+static void writeReactorState(struct simulation_configuration_struct *configuration, int timestep, char *outfile)
 {
     unsigned long int num_fissions = getTotalNumberFissions(configuration);
     double mev = getMeVFromFissions(num_fissions);
@@ -377,7 +358,7 @@ int main(int argc, char *argv[])
  * Retrieves the quantities of atoms in a fuel assembly across all the pellets for
  * each chemical that will be written out to the file
  **/
-/*static*/ void getFuelAssemblyChemicalContents(struct fuel_assembly_struct *fuel_rod, double *amounts)
+static void getFuelAssemblyChemicalContents(struct fuel_assembly_struct *fuel_rod, double *amounts)
 {
     for (int i = 0; i < 11; i++)
         amounts[i] = 0;
@@ -394,7 +375,7 @@ int main(int argc, char *argv[])
  * Clears out the file that we are going to write to for the reactor state, this is called at simulation
  * startup and it will overwrite any existing contents
  **/
-/*static*/ void clearReactorStateFile(char *outfile)
+static void clearReactorStateFile(char *outfile)
 {
     FILE *f = fopen(outfile, "w");
     fclose(f);
@@ -404,7 +385,7 @@ int main(int argc, char *argv[])
  * Given an x and y position in the reactor core this will locate the channel
  * that that corresponds to
  **/
-/*static*/ struct channel_struct *locateChannelFromPosition(double x, double y, struct simulation_configuration_struct *configuration)
+struct channel_struct *locateChannelFromPosition(double x, double y, struct simulation_configuration_struct *configuration)
 {
     if (x > configuration->size_x || x < 0.0)
         return NULL;
@@ -419,7 +400,7 @@ int main(int argc, char *argv[])
  * Based upon the properties of each fuel assembly will return the total number of fissions
  *  that have occured across all fuel assemblies in the simulation.
  **/
-/*static*/ unsigned long int getTotalNumberFissions(struct simulation_configuration_struct *configuration)
+static unsigned long int getTotalNumberFissions(struct simulation_configuration_struct *configuration)
 {
     unsigned long int total_fissions = 0;
     for (int i = 0; i < configuration->channels_x; i++)
@@ -439,7 +420,7 @@ int main(int argc, char *argv[])
 /**
  * Returns in seconds the elapsed time since the start_time argument and now
  **/
-/*static*/ double getElapsedTime(struct timeval start_time)
+static double getElapsedTime(struct timeval start_time)
 {
     struct timeval curr_time;
     gettimeofday(&curr_time, NULL);
@@ -450,7 +431,7 @@ int main(int argc, char *argv[])
 
 
 
-void __attribute__ ((noinline)) updateNeutronPosition(struct neutron_struct *neutron, int dt) {
+void /*__attribute__ ((noinline))*/ updateNeutronPosition(struct neutron_struct *neutron, int dt) {
 
      // Rest mass is 1 for a neutron
     double total_velocity = MeVToVelocity(neutron->energy, 1);
@@ -472,7 +453,7 @@ void __attribute__ ((noinline)) updateNeutronPosition(struct neutron_struct *neu
  * These functions were separated only for profiling ends. The compiler is inlining them all (which is desirable) but for testing they will be kept as noinline
  */
 
-void __attribute__ ((noinline)) interactWithFuelAssembly(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i) {
+void /*__attribute__ ((noinline))*/ interactWithFuelAssembly(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i) {
 
     // It is in a fuel assembly channel, determine if it has collided with a neutron and if so deactivate it
 
@@ -489,7 +470,7 @@ void __attribute__ ((noinline)) interactWithFuelAssembly(struct neutron_struct *
 }
 
 
-void __attribute__ ((noinline)) interactWithModerator(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i) {
+void /*__attribute__ ((noinline))*/ interactWithModerator(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i) {
 
     // The neutron is in the moderator, determine if it has been absorbed by the moderator or ot
 
@@ -502,7 +483,7 @@ void __attribute__ ((noinline)) interactWithModerator(struct neutron_struct *neu
 }
 
 
-void __attribute__ ((noinline)) interactWithControlRod(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i) {
+void /*__attribute__ ((noinline))*/ interactWithControlRod(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i) {
 
     if (neutron->pos_z <= reactorChannel->contents.control_rod.lowered_to_level)
     {
@@ -512,7 +493,7 @@ void __attribute__ ((noinline)) interactWithControlRod(struct neutron_struct *ne
 }
 
 
-bool __attribute__ ((noinline)) determineOutbound(struct neutron_struct *neutron, struct simulation_configuration_struct *configuration, long int i) {
+bool /*__attribute__ ((noinline))*/ determineOutbound(struct neutron_struct *neutron, struct simulation_configuration_struct *configuration, long int i) {
 
     bool outbound = neutron->pos_x > configuration->size_x || neutron->pos_x < 0.0 ||
            neutron->pos_y > configuration->size_y || neutron->pos_y < 0.0 ||
@@ -527,7 +508,7 @@ bool __attribute__ ((noinline)) determineOutbound(struct neutron_struct *neutron
 
 
 
-void __attribute__ ((noinline)) rebuildIndex(struct simulation_configuration_struct *configuration)
+void /*__attribute__ ((noinline))*/ rebuildIndex(struct simulation_configuration_struct *configuration)
 {
     long int count_inactive = 0;
     currentNeutronIndex = local_max_neutrons;

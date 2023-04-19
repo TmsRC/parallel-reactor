@@ -21,11 +21,11 @@ extern MPI_Request *neutrons_recv_request;
 // Temporary variables
 
 extern unsigned long int local_max_neutrons;
-extern /*long*/ int *fuel_assembly_neutrons_index; // Note: I have to address this datatype issue
+extern int *fuel_assembly_neutrons_index;
 extern int fuelHandlerProc;
-extern bool neutronHandler, fuelHandler;
+extern bool neutronHandler, fuelHandler,serial;
 extern int max_fission_events;
 extern int num_rolling_msgs;
-/*long*/extern int iterations_per_msg;
+extern int iterations_per_msg;
 extern struct fission_event *fission_array;
 

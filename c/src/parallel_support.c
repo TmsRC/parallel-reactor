@@ -38,7 +38,7 @@ unsigned long int local_max_neutrons;
 /*long*/ int *fuel_assembly_neutrons_index; // Contains the index in neutrons of neutrons that entered the fuel assembly. Also used to store the pellet height of generated neutrons
 
 int fuelHandlerProc;
-bool neutronHandler, fuelHandler;
+bool neutronHandler, fuelHandler,serial;
 int max_fission_events;
 int num_rolling_msgs;
 /*long*/ int iterations_per_msg;
@@ -184,7 +184,7 @@ void manageFuelAssemblyInteractions(struct simulation_configuration_struct *conf
 
 //        printf("Rank %d waiting to send to rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
         // Send the neutrons back
-        MPI_Issend(&neutrons[buff_loc],count,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_send_request[i]);
+        MPI_Isend(&neutrons[buff_loc],count,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_send_request[i]);
 
 //        printf("Rank %d waiting to receive from rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
         // If this is not the last message, prepare for the next one
@@ -262,7 +262,7 @@ void sendFuelAssemblyNeutrons(int count, int msg_num)
 
 
 //    printf("Rank %d waiting to send to rank %d\n",rank,receiver);
-    MPI_Issend(&neutrons[0],1,MPI_SPARSE_NEUTRONS[msg_num], fuelHandlerProc, 0, world, &neutrons_send_request[msg_num]);
+    MPI_Isend(&neutrons[0],1,MPI_SPARSE_NEUTRONS[msg_num], fuelHandlerProc, 0, world, &neutrons_send_request[msg_num]);
     MPI_Irecv(&neutrons[0],1,MPI_SPARSE_NEUTRONS[msg_num],fuelHandlerProc,0,world,&neutrons_recv_request[msg_num]);
 }
 
@@ -404,14 +404,14 @@ void sendFissionEvents(int initial_pellets)
     for(int i=0; i<remainder; i++) // Sends one event more to the first few processes, to account for the remainder of the division
     {
         int proc = (start+i)%num_receivers+1;  // Note: assumes rank 0 is fuelHandler
-        MPI_Issend(&fission_array[i],1,MPI_STRIDED_FISSION,proc,0,world,&neutrons_send_request[i]);
+        MPI_Isend(&fission_array[i],1,MPI_STRIDED_FISSION,proc,0,world,&neutrons_send_request[i]);
     }
 
     commit_strided_fission_datatype(events_per_proc);
     for(int i=remainder; i<size-1; i++)
     {
         int proc = (start+i)%num_receivers+1;
-        MPI_Issend(&fission_array[i],1,MPI_STRIDED_FISSION,proc,0,world,&neutrons_send_request[i]);
+        MPI_Isend(&fission_array[i],1,MPI_STRIDED_FISSION,proc,0,world,&neutrons_send_request[i]);
     }
 
     // Wait for all to receive
