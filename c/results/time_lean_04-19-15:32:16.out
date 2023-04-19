@@ -1,0 +1,101 @@
+
+
+Warning: The command line 'amplxe-cl' is deprecated. Use 'vtune' instead.
+
+Warning: The command line 'amplxe-cl' is deprecated. Use 'vtune' instead.
+
+Simulation configured for reactor core of size 1m by 1m by 1m, timesteps=1000 dt=10ns
+------------------------------------------------------------------------------------------------
+Timestep: 100, model time is 1.000000e-06 secs, current runtime is 5.96 seconds. 1000000 active neutrons, 380603 fissions, releasing 7.612060e+07 MeV and 1.217930e-05 Joules
+Timestep: 200, model time is 2.000000e-06 secs, current runtime is 11.67 seconds. 1000000 active neutrons, 746804 fissions, releasing 1.493608e+08 MeV and 2.389773e-05 Joules
+Timestep: 300, model time is 3.000000e-06 secs, current runtime is 17.42 seconds. 1000000 active neutrons, 1101618 fissions, releasing 2.203236e+08 MeV and 3.525178e-05 Joules
+Timestep: 400, model time is 4.000000e-06 secs, current runtime is 24.42 seconds. 1000000 active neutrons, 1444526 fissions, releasing 2.889052e+08 MeV and 4.622483e-05 Joules
+Timestep: 500, model time is 5.000000e-06 secs, current runtime is 30.96 seconds. 1000000 active neutrons, 1777526 fissions, releasing 3.555052e+08 MeV and 5.688083e-05 Joules
+Timestep: 600, model time is 6.000000e-06 secs, current runtime is 39.00 seconds. 1000000 active neutrons, 2098953 fissions, releasing 4.197906e+08 MeV and 6.716650e-05 Joules
+Timestep: 700, model time is 7.000000e-06 secs, current runtime is 46.65 seconds. 1000000 active neutrons, 2409218 fissions, releasing 4.818436e+08 MeV and 7.709498e-05 Joules
+Timestep: 800, model time is 8.000000e-06 secs, current runtime is 55.49 seconds. 1000000 active neutrons, 2710947 fissions, releasing 5.421894e+08 MeV and 8.675030e-05 Joules
+Timestep: 900, model time is 9.000000e-06 secs, current runtime is 61.04 seconds. 1000000 active neutrons, 3004198 fissions, releasing 6.008396e+08 MeV and 9.613434e-05 Joules
+------------------------------------------------------------------------------------------------
+Model completed after 1000 timesteps
+Total model time: 0.000010 secs
+Total fissions: 3284932 releasing 6.569864e+08 MeV and 1.051178e-04 Joules
+Total runtime: 66.52 seconds
+Elapsed Time: 68.850s
+    CPU Time: 132.280s
+        Effective Time: 106.140s
+            Idle: 0.110s
+            Poor: 106.030s
+            Ok: 0s
+            Ideal: 0s
+            Over: 0s
+        Spin Time: 26.140s
+         | A significant portion of CPU time is spent waiting. Use this metric
+         | to discover which synchronizations are spinning. Consider adjusting
+         | spin wait parameters, changing the lock implementation (for example,
+         | by backing off then descheduling), or adjusting the synchronization
+         | granularity.
+         |
+            MPI Busy Wait Time: 26.140s
+             | CPU time spent on waits for MPI communication operations is
+             | significant and can negatively impact the application performance
+             | and scalability. This can be caused by load imbalance between
+             | ranks, active communications or non-optimal settings of MPI
+             | library. Explore details on communication inefficiencies with
+             | Intel Trace Analyzer and Collector.
+             |
+            Other: 0s
+        Overhead Time: 0s
+            Other: 0s
+    Total Thread Count: 4
+    Paused Time: 0s
+
+Top Hotspots
+Function                   Module           CPU Time
+-------------------------  ---------------  --------
+PMPI_Waitany               libmpi.so.12      22.370s
+pthread_spin_lock          libpthread.so.0   15.749s
+MeVToVelocity              reactor           15.228s
+updateNeutrons             reactor           11.829s
+locateChannelFromPosition  reactor           10.461s
+[Others]                   N/A               56.643s
+Effective Physical Core Utilization: 4.6% (1.646 out of 36)
+ | The metric value is low, which may signal a poor physical CPU cores
+ | utilization caused by:
+ |     - load imbalance
+ |     - threading runtime overhead
+ |     - contended synchronization
+ |     - thread/process underutilization
+ |     - incorrect affinity that utilizes logical cores instead of physical
+ |       cores
+ | Explore sub-metrics to estimate the efficiency of MPI and OpenMP parallelism
+ | or run the Locks and Waits analysis to identify parallel bottlenecks for
+ | other parallel runtimes.
+ |
+    Effective Logical Core Utilization: 2.6% (1.862 out of 72)
+     | The metric value is low, which may signal a poor logical CPU cores
+     | utilization. Consider improving physical core utilization as the first
+     | step and then look at opportunities to utilize logical cores, which in
+     | some cases can improve processor throughput and overall performance of
+     | multi-threaded applications.
+     |
+Collection and Platform Info
+    Application Command Line: ./reactor "config_lean.txt" "reactorState_lean_04-19-15:32:16.out" 
+    Operating System: 4.18.0-305.25.1.el8_4.x86_64 NAME="Red Hat Enterprise Linux" VERSION="8.4 (Ootpa)" ID="rhel" ID_LIKE="fedora" VERSION_ID="8.4" PLATFORM_ID="platform:el8" PRETTY_NAME="Red Hat Enterprise Linux 8.4 (Ootpa)" ANSI_COLOR="0;31" CPE_NAME="cpe:/o:redhat:enterprise_linux:8.4:GA" HOME_URL="https://www.redhat.com/" DOCUMENTATION_URL="https://access.redhat.com/documentation/red_hat_enterprise_linux/8/" BUG_REPORT_URL="https://bugzilla.redhat.com/"  REDHAT_BUGZILLA_PRODUCT="Red Hat Enterprise Linux 8" REDHAT_BUGZILLA_PRODUCT_VERSION=8.4 REDHAT_SUPPORT_PRODUCT="Red Hat Enterprise Linux" REDHAT_SUPPORT_PRODUCT_VERSION="8.4"
+    MPI Process Rank: 1
+    Computer Name: cirrus-login1
+    Result Size: 9 MB 
+    Collection start time: 14:32:42 19/04/2023 UTC
+    Collection stop time: 14:33:51 19/04/2023 UTC
+    Collector Type: Driverless Perf per-process counting,User-mode sampling and tracing
+    CPU
+        Name: Intel(R) Xeon(R) Processor code named Broadwell
+        Frequency: 2.100 GHz 
+        Logical CPU Count: 72
+        Cache Allocation Technology
+            Level 2 capability: not detected
+            Level 3 capability: available
+
+If you want to skip descriptions of detected performance issues in the report,
+enter: vtune -report summary -report-knob show-issues=false -r <my_result_dir>.
+Alternatively, you may view the report in the csv format: vtune -report
+<report_name> -format=csv.
