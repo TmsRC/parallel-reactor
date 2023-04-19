@@ -87,7 +87,6 @@ MPI_Request *neutrons_recv_request;
 
 // Temporary variables
 
-unsigned long int global_event_count, global_step_counter, global_fuel_neutrons;
 unsigned long int local_max_neutrons;
 /*long*/ int *fuel_assembly_neutrons_index; // Note: I have to address this datatype issue
 int fuelHandlerProc;
@@ -121,8 +120,6 @@ void manageFuelAssemblyInteractions(struct simulation_configuration_struct *conf
             MPI_Wait(&neutrons_recv_request[i],&status);
 
             MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
-            global_event_count += count;
-
             for(long int j=0; j<count; j++)
             {
                 struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[j].pos_x, neutrons[j].pos_y, configuration);
@@ -137,36 +134,6 @@ void manageFuelAssemblyInteractions(struct simulation_configuration_struct *conf
 
 
 }
-
-
-//void manageFuelAssemblyInteractionMessage(int idx, int count, struct simulation_configuration_struct *configuration)
-//{
-//
-//    MPI_Status status;
-//
-//    int proc_buff_size = configuration->max_neutrons/(size-1);
-//    int buff_loc = idx*proc_buff_size;
-//    int proc = idx + 1;
-//
-//    printf("Rank %d received %d\n",rank,count);
-//    // for(int i=0; i<count; i+=100) printf("Rank %d, neutron %d, %lf,\n",rank,i,neutrons[i].energy);
-//
-//    for(long int i=0; i<count; i++)
-//    {
-//        struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[i].pos_x, neutrons[i].pos_y, configuration);
-//        interactWithFuelAssembly(&neutrons[i],reactorChannel,configuration,0);
-//    }
-//
-//    // Note: this one is actually blocking. The wait is just for profiling.
-//
-////    printf("Rank %d sending %d to rank %d\n",rank,count,proc);
-//    count = 0;
-//    MPI_Issend(&neutrons[buff_loc],count,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_send_request[idx]);
-//    MPI_Wait(&neutrons_send_request[idx],&status);
-//
-//}
-
-
 
 
 
@@ -219,7 +186,6 @@ int main(int argc, char *argv[])
     iterations_per_msg = local_max_neutrons / num_rolling_msgs;
     initialiseReactorCore(&configuration);
     initialiseNeutrons(&configuration);
-//    if(rank==receiver) printf("Its per msg: %d\n",iterations_per_msg);
 
 
     commit_simple_neutron_datatype();
@@ -235,25 +201,15 @@ int main(int argc, char *argv[])
 
 //    printf("Max int: %d. Num neutrons: %ld ",INT_MAX,configuration.max_neutrons);
 
-    global_fuel_neutrons = 0;
-    global_step_counter = 0;
     for (int i = 0; i < configuration.num_timesteps; i++)
     {
         // Progress in timesteps
         step(configuration.dt, &configuration);
 
-        global_step_counter ++;
-
         if (i > 0 && i % configuration.display_progess_frequency == 0)
         {
             if(neutronHandler) calculateNumberActiveNeutrons(&configuration);
             if(fuelHandler) generateReport(configuration.dt, i, &configuration, start_time);
-//            unsigned long int temp;
-//            MPI_Barrier(world);
-//            if(fuelHandler) printf("%d----------------------------------------------\n",global_step_counter);
-//            if(neutronHandler) printf("Rank %d, %d neutrons in fuel channel\n",rank,global_fuel_neutrons);
-//            MPI_Reduce(&global_fuel_neutrons,&temp,1,MPI_UNSIGNED_LONG,MPI_SUM,0,world);
-//            if(fuelHandler) printf("-- Global number %ld\n",temp);
         }
 
         if (i > 0 && i % configuration.write_reactor_state_frequency == 0)
@@ -271,8 +227,6 @@ int main(int argc, char *argv[])
     if(fuelHandler) printf("------------------------------------------------------------------------------------------------\n");
     if(fuelHandler) printf("Model completed after %d timesteps\nTotal model time: %f secs\nTotal fissions: %ld releasing %e MeV and %e Joules\nTotal runtime: %.2f seconds\n",
                        configuration.num_timesteps, (NS_AS_SEC * configuration.dt) * configuration.num_timesteps, num_fissions, mev, joules, getElapsedTime(start_time));
-
-//   if(rank==0) printf("---- Global count: %ld, fission-event ratio: %lf ----- \n",global_event_count,((double)global_event_count)/num_fissions);
 
     MPI_Finalize();
 
@@ -353,17 +307,16 @@ int main(int argc, char *argv[])
             }
         }
 
-        if ( ((i+1)%iterations_per_msg == 0 && (i+1)!=(num_rolling_msgs*iterations_per_msg)) || ((i+1)==local_max_neutrons) ) // Note: lots of attention here, this loop is very different from the receiving one, so it has a significant deadlock risk
-//        if ( (i+1)%iterations_per_msg == 0 ) // Note: lots of attention here, this loop is very different from the receiving one, so it has a significant deadlock risk
+        // Note: lots of attention here, this loop is very different from the receiving one, so it has a significant deadlock risk 
+        if ( ((i+1)%iterations_per_msg == 0 && (i+1)!=(num_rolling_msgs*iterations_per_msg)) || ((i+1)==local_max_neutrons) )
         {
+
             MPI_Status status;
             if(msg_num>0) MPI_Wait(&neutrons_send_request[msg_num-1],&status);
             if(msg_num>0) MPI_Wait(&neutrons_recv_request[msg_num-1],&status);
+
             send_fuel_assembly_neutrons(num_fuel_interacting,msg_num);
             msg_num ++;
-//            printf("Global counter: %d\n",global_step_counter);
-
-            global_fuel_neutrons = num_fuel_interacting;
             num_fuel_interacting = 0;
 
         }
@@ -371,7 +324,6 @@ int main(int argc, char *argv[])
     }
 
 
-    int temp_count = 0;
     for (long int i = 0; i < local_max_neutrons; i++)
     {
         if(neutrons[i].active)
@@ -379,7 +331,6 @@ int main(int argc, char *argv[])
             // Now figure out if neutron is in a fuel assembly, moderator or control rod. If so then need to handle interaction
             struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[i].pos_x, neutrons[i].pos_y, configuration);
             interactWithReactor(&neutrons[i],reactorChannel,configuration,i);
-            temp_count++;
         }
     }
 
@@ -397,10 +348,8 @@ int main(int argc, char *argv[])
  **/
 /*static*/ void updateNeutronGenerator(int dt, struct channel_struct *channel, struct simulation_configuration_struct *configuration)
 {
-//    unsigned long int availableNeutrons = currentNeutronIndex;
-//    MPI_Ssend(&currentNeutronIndex,1,MPI_UNSIGNED_LONG,fuelHandlerProc,2,world);
-
     unsigned long int number_new_neutrons = getNumberNeutronsFromGenerator(channel->contents.neutron_generator.weight, dt);
+    number_new_neutrons = parallel_rescale_inv(number_new_neutrons,1,false,false);
 
     for (int i = 0; i < number_new_neutrons; i++)
     {
@@ -418,10 +367,8 @@ void generateNeutrons(int dt, struct channel_struct *channel, struct simulation_
 
     int num_remotes = size-1;
     unsigned long int *available_neutrons = (unsigned long int *) malloc(sizeof(unsigned long int)*size);
+    int temp = 0;
 
-//    MPI_Request gather_request;
-
-    unsigned long int temp = 0;
     MPI_Gather(&temp,1,MPI_UNSIGNED_LONG,&available_neutrons,1,MPI_UNSIGNED_LONG,fuelHandlerProc,world);
 
     unsigned long int number_new_neutrons = getNumberNeutronsFromGenerator(channel->contents.neutron_generator.weight, dt);
@@ -444,8 +391,6 @@ void generateNeutrons(int dt, struct channel_struct *channel, struct simulation_
     MPI_Scatter(&available_neutrons,1,MPI_UNSIGNED_LONG,&temp,1,MPI_UNSIGNED_LONG,fuelHandlerProc,world);
 
     free(available_neutrons);
-
-    //MPI_Wait();
 
 }
 
@@ -712,7 +657,7 @@ void generateNeutrons(int dt, struct channel_struct *channel, struct simulation_
  **/
 /*static*/ unsigned long int calculateNumberActiveNeutrons(struct simulation_configuration_struct *configuration)
 {
-
+// It should be possible to calculate this as local_max_neutrons - currentNeutronIndex
     unsigned long int temp;
     unsigned long int activeNeutrons = 0;
     for (unsigned long int i = 0; i < local_max_neutrons; i++)
@@ -720,8 +665,6 @@ void generateNeutrons(int dt, struct channel_struct *channel, struct simulation_
         if (neutrons[i].active)
             activeNeutrons++;
     }
-
-//    printf("Rank %d with %ld active",rank,activeNeutrons);
 
     MPI_Reduce(&activeNeutrons,&temp,1,MPI_UNSIGNED_LONG,MPI_SUM,fuelHandlerProc,world);
 
@@ -1057,16 +1000,10 @@ void manageFuelAssemblyFissions(int dt, struct simulation_configuration_struct *
             {
                 executeFissions(dt,&(reactor_core[i][j]));
             }
-//            if (reactor_core[i][j].type == NEUTRON_GENERATOR)
-//            {
-//                generateNeutrons(dt, &(reactor_core[i][j]), configuration);
-//            }
 
         }
     }
 }
-
-
 
 
 void createNeutronsFromFission(struct channel_struct *channel)
