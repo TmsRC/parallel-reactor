@@ -1,4 +1,4 @@
-SRC = src/simulation_configuration.c src/main.c src/simulation_support.c
+SRC = src/simulation_configuration.c src/main.c src/simulation_support.c src/parallel_support.c
 LFLAGS=-lm
 CFLAGS=-O3
 
