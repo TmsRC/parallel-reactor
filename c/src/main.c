@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 
     neutronHandler = rank>0 && size>1; // Higher ranks distribute the neutrons among themselves
     fuelHandler = rank==0 && size>1; // Rank 0 handles the fuel channels
-    bool serial = size==1;
+    bool serial = size==1; // First attempt at recovering serial implementation, not yet utilized
 
     fuelHandlerProc = 0; // Rank 0 is set as the fuel handler (can't really be changed, some parts of the code assume 0)
     num_rolling_msgs = 15; // How many iterations to distribute messages into
@@ -113,24 +113,6 @@ int main(int argc, char *argv[])
 
     }
 
-    for (int i = 0; i < configuration.num_timesteps && serial; i++)
-    {
-        // Progress in timesteps
-        serial_step(configuration.dt, &configuration);
-
-        if (i > 0 && i % configuration.display_progess_frequency == 0)
-        {
-            generateReport(configuration.dt, i, &configuration, start_time);
-        }
-
-        if (i > 0 && i % configuration.write_reactor_state_frequency == 0)
-        {
-            writeReactorState(&configuration, i, argv[2]);
-        }
-
-    }
-
-
     // Now we are finished write some summary information
     unsigned long int num_fissions = getTotalNumberFissions(&configuration);
     double mev = getMeVFromFissions(num_fissions);
@@ -151,7 +133,6 @@ static void generateReport(int dt, int timestep, struct simulation_configuration
 {
     unsigned long int num_active_neutrons;
     if(!serial) num_active_neutrons = getNumberActiveNeutrons(configuration);
-    if(serial) num_active_neutrons = serial_getNumberActiveNeutrons(configuration);
     unsigned long int num_fissions = getTotalNumberFissions(configuration);
     double mev = getMeVFromFissions(num_fissions);
     double joules = getJoulesFromMeV(mev);
