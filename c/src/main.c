@@ -9,8 +9,20 @@
 
 #include <limits.h>
 #include <mpi.h>
-#include "parallel_support.h"
 #include "shared.h"
+#include "parallel_support.h"
+#include "serial_support.h"
+
+//// The neutrons that are currently moving throughout the reactor core
+//struct neutron_struct *neutrons;
+//// Indexes of empty neutrons (i.e. those inactive) that can be used
+//unsigned long int *neutron_index;
+//// The current index in the neutron_index array which is the next free neutron
+//unsigned long int currentNeutronIndex = 0;
+//// The reactor core itself, each are channels in the x and y dimensions
+//struct channel_struct **reactor_core;
+
+
 
 /**
  * Program entry point, this code is run with configuration file as command line argument

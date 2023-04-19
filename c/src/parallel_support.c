@@ -1,9 +1,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#include <string.h>
-#include <sys/time.h>
-#include <time.h>
 #include "simulation_configuration.h"
 #include "simulation_support.h"
 
@@ -21,7 +18,6 @@ unsigned long int currentNeutronIndex = 0;
 // The reactor core itself, each are channels in the x and y dimensions
 struct channel_struct **reactor_core;
 
-int global_counter=0;
 
 // MPI variables
 int size, rank;

@@ -1,13 +1,8 @@
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/time.h>
-#include <time.h>
+#ifndef PARALLEL_INCLUDE
+#define PARALLEL_INCLUDE
+
 #include "simulation_configuration.h"
 #include "simulation_support.h"
-
-#include <limits.h>
 #include <mpi.h>
 
 // Height of a fuel pellet in meters (they are 40mm by 40mm by 2.5mm)
@@ -56,6 +51,7 @@ void rebuildIndex(struct simulation_configuration_struct *configuration);
 void commit_simple_neutron_datatype(void);
 void commit_fission_event_datatype(void);
 void commit_sparse_neutrons_datatype(int count, MPI_Datatype *sparse_neutrons);
+void commit_strided_fission_datatype(int);
 unsigned long int parallel_rescale_inv(unsigned long int number, int num_ignored_processes, bool get_highest, bool get_total);
 
 void manageFuelAssemblyInteractions(struct simulation_configuration_struct *configuration);
@@ -67,3 +63,5 @@ unsigned long int calculateNumberActiveNeutrons(struct simulation_configuration_
 
 void sendFuelAssemblyNeutrons(int count, int msg_num);
 void sendFissionEvents(int initial_pellets);
+
+#endif
