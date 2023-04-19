@@ -29,7 +29,7 @@ struct fission_event {
 
 /*static*/ void step(int, struct simulation_configuration_struct *);
 /*static*/ void generateReport(int, int, struct simulation_configuration_struct *, struct timeval);
-/*static*/ void updateReactorCore(int, struct simulation_configuration_struct *);
+/*static*/ void createNewNeutrons(int, struct simulation_configuration_struct *);
 /*static*/ void updateNeutrons(int, struct simulation_configuration_struct *);
 /*static*/ void updateFuelAssembly(int, struct channel_struct *);
 /*static*/ void updateNeutronGenerator(int, struct channel_struct *, struct simulation_configuration_struct *);
@@ -58,10 +58,12 @@ void commit_fission_event_datatype(void);
 void commit_sparse_neutrons_datatype(int count, MPI_Datatype *sparse_neutrons);
 unsigned long int parallel_rescale_inv(unsigned long int number, int num_ignored_processes, bool get_highest, bool get_total);
 
+void manageFuelAssemblyInteractions(struct simulation_configuration_struct *configuration);
 void executeFissions(int dt, struct channel_struct *channel);
-void manageFuelAssemblyFissions(int dt, struct simulation_configuration_struct *configuration);
+
+void updateFuelChannels(int dt, struct simulation_configuration_struct *configuration);
 void createNeutronsFromFission(struct channel_struct *channel);
 unsigned long int calculateNumberActiveNeutrons(struct simulation_configuration_struct *);
 
 void sendFuelAssemblyNeutrons(int count, int msg_num);
-void sendGeneratedNeutrons(int initial_pellets);
+void sendFissionEvents(int initial_pellets);

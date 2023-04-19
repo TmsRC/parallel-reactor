@@ -50,270 +50,29 @@ struct fission_event *fission_array;
 
 
 
-void manageFuelAssemblyInteractions(struct simulation_configuration_struct *configuration)
-{
-
-    MPI_Status status;
-
-    int proc;
-    int buff_loc;
-    int proc_buff_size = local_max_neutrons/(size-1);
-
-    int *received_messages = (int *) malloc(sizeof(int)*(size-1));
-    int total_received_messages = 0;
-
-    for(int i=0; i<(size-1); i++)
-    {
-        proc = i+1;
-        buff_loc = i*proc_buff_size;
-        MPI_Irecv(&neutrons[buff_loc],local_max_neutrons,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_recv_request[i]); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
-        received_messages[i] = 0;
-    }
-
-    while( total_received_messages < num_rolling_msgs*(size-1) ) // Note: there should be exactly num_rolling * (size-1) messages to wait for
-    {
-
-        int i;
-        MPI_Waitany(size-1,neutrons_recv_request,&i,&status);
-        if(received_messages[i]>0) MPI_Wait(&neutrons_send_request[i],MPI_STATUS_IGNORE);
-
-        received_messages[i] ++;
-        total_received_messages ++;
-
-        int count;
-        MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
-
-        proc = i+1;
-        buff_loc = i*proc_buff_size;
-
-
-        for(long int j=0; j<count; j++)
-        {
-            struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[buff_loc+j].pos_x, neutrons[buff_loc+j].pos_y, configuration);
-            interactWithFuelAssembly(&neutrons[buff_loc+j],reactorChannel,configuration,0);
-        }
-
-//        printf("Rank %d waiting to send to rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
-        MPI_Issend(&neutrons[buff_loc],count,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_send_request[i]);
-//        MPI_Wait(&neutrons_send_request[i],&status);
-
-
-//        printf("Rank %d waiting to receive from rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
-        if(received_messages[i]<num_rolling_msgs) MPI_Irecv(&neutrons[buff_loc],local_max_neutrons,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_recv_request[i]); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
-//        MPI_Wait(&neutrons_recv_request[i],&status);
-
-    }
-
-}
-
-
-//void manageFuelAssemblyInteractions(struct simulation_configuration_struct *configuration)
-//{
-//
-//    MPI_Status status;
-//
-//    int proc;
-//    int buff_loc;
-//    int proc_buff_size = local_max_neutrons/(size-1);
-//
-//    int *received_messages = (int *) malloc(sizeof(int)*(size-1));
-//    int total_received_messages = 0;
-//
-//    for(int i=0; i<(size-1); i++)
-//    {
-//        proc = i+1;
-//        buff_loc = i*proc_buff_size;
-//        MPI_Irecv(&neutrons[buff_loc],local_max_neutrons,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_recv_request[i]); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
-//        received_messages[i] = 0;
-//    }
-//
-//    while( total_received_messages < num_rolling_msgs*(size-1) ) // Note: there should be exactly num_rolling * (size-1) messages to wait for
-//    {
-//        int received = 0;
-//        for(int i=0; i<(size-1); i++)
-//        {
-//          MPI_Test(&neutrons_recv_request[i],&received,&status);
-//          if(received)
-//          {
-//
-//            received_messages[i] ++;
-//            total_received_messages ++;
-//
-//            int count;
-//            MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
-//
-//            proc = i+1;
-//            buff_loc = i*proc_buff_size;
-//
-//
-//            for(long int j=0; j<count; j++)
-//            {
-//                struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[buff_loc+j].pos_x, neutrons[buff_loc+j].pos_y, configuration);
-//                interactWithFuelAssembly(&neutrons[buff_loc+j],reactorChannel,configuration,0);
-//            }
-//
-////            printf("Rank %d waiting to send to rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
-//            MPI_Issend(&neutrons[buff_loc],count,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_send_request[i]);
-////            MPI_Wait(&neutrons_send_request[i],&status);
-//
-//
-////            printf("Rank %d waiting to receive from rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
-//            if(received_messages[i]<num_rolling_msgs) MPI_Irecv(&neutrons[buff_loc],local_max_neutrons,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_recv_request[i]); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
-////            MPI_Wait(&neutrons_recv_request[i],&status);
-//
-//          }
-//        }
-//    }
-//}
-
-
-//void manageFuelAssemblyInteractions(struct simulation_configuration_struct *configuration)
-//{
-//
-//    MPI_Status status;
-//
-//    int proc;
-//    int buff_loc;
-//    int proc_buff_size = local_max_neutrons/(size-1);
-//
-//
-//    for(int msg_num = 0; msg_num < num_rolling_msgs; msg_num++) // Note: there should be exactly num_rolling * (size-1) messages to wait for
-//    {
-//        for(int i=0; i<(size-1); i++)
-//        {
-//
-//            int count;
-//            proc = i+1;
-//            buff_loc = i*proc_buff_size;
-////            printf("Rank %d waiting to receive from rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
-//            MPI_Irecv(&neutrons[buff_loc],local_max_neutrons,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_recv_request[i]); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
-//            MPI_Wait(&neutrons_recv_request[i],&status);
-//
-//            MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
-//
-//            for(long int j=0; j<count; j++)
-//            {
-//                struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[buff_loc+j].pos_x, neutrons[buff_loc+j].pos_y, configuration);
-//                interactWithFuelAssembly(&neutrons[buff_loc+j],reactorChannel,configuration,0);
-//            }
-//
-////            printf("Rank %d waiting to send to rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
-//            MPI_Issend(&neutrons[buff_loc],count,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_send_request[i]);
-//            MPI_Wait(&neutrons_send_request[i],&status);
-//        }
-//    }
-//}
-
-void createNeutronsFromFission(struct channel_struct *channel)
-{
-    MPI_Status status;
-    int count;
-
-    MPI_Recv(&fission_array[0],max_fission_events,MPI_FISSION_EVENT,fuelHandlerProc,0,world,&status); // Note: num_pellets on the neutron handler is not up-to-date, max_fission is needed
-    MPI_Get_count(&status,MPI_FISSION_EVENT,&count);
-
-    for(int i=0; i < count; i++)
-    {
-        createNeutrons(fission_array[i].generated_neutrons,channel,(fission_array[i].pellet_height * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2) );
-    }
-
-}
-
-
-
-void executeFissions(int dt, struct channel_struct *channel)
-{
-
-    int initial_pellets = channel->contents.fuel_assembly.num_pellets;
-    unsigned long int fission_neutrons_counter;
-
-    for (int i = 0; i < initial_pellets; i++)
-    {
-
-        fission_neutrons_counter = 0;
-
-        unsigned long int num_u236 = (unsigned long int)channel->contents.fuel_assembly.quantities[i][U236];
-        for (unsigned long int j = 0; j < num_u236; j++)
-        {
-            int num_neutrons = fissionU236(channel, i);
-            channel->contents.fuel_assembly.num_fissions++;
-            fission_neutrons_counter+=num_neutrons;
-        }
-        unsigned long int num_pu240 = (unsigned long int)channel->contents.fuel_assembly.quantities[i][Pu240];
-        for (unsigned long int j = 0; j < num_pu240; j++)
-        {
-            int num_neutrons = fissionPu240(channel, i);
-            channel->contents.fuel_assembly.num_fissions++;
-            fission_neutrons_counter+=num_neutrons;
-        }
-
-        // Note: creates structure with i and the total number of neutrons and adds to an array.
-        fission_array[i].generated_neutrons = fission_neutrons_counter;
-        fission_array[i].pellet_height = i;
-
-    }
-
-    sendGeneratedNeutrons(initial_pellets); // Note: this assumes global fission array
-
-}
-
-
-void sendGeneratedNeutrons(int initial_pellets)
-{
-
-    int num_receivers = size-1;
-
-    int events_per_proc = initial_pellets/num_receivers;
-    int remainder = initial_pellets%num_receivers;
-    int displ;
-
-    MPI_Status status;
-
-    int start = 0;//rand(); // In order to distribute "fairly", but it seems to cause more problems than it solves
-
-    commit_strided_fission_datatype(events_per_proc+1);
-    for(int i=0; i<remainder; i++)
-    {
-        int proc = (start+i)%num_receivers+1;  // Note: assumes first proc is fuelHandler
-        MPI_Issend(&fission_array[i],1,MPI_STRIDED_FISSION,proc,0,world,&neutrons_send_request[i]);
-    }
-
-    commit_strided_fission_datatype(events_per_proc);
-    for(int i=remainder; i<size-1; i++)
-    {
-        int proc = (start+i)%num_receivers+1;
-        MPI_Issend(&fission_array[i],1,MPI_STRIDED_FISSION,proc,0,world,&neutrons_send_request[i]);
-    }
-
-
-
-    for(int i=1; i<size; i++) // Note: this assumes fuelHandler = rank 0
-    {
-        MPI_Wait(&neutrons_send_request[i-1],&status);
-    }
-
-}
-
-
-
-
 
 /**
+ * First-level target for parallelism (pipelined)
+ *
  * Undertake a single timestep of processing
  **/
 /*static*/ void step(int dt, struct simulation_configuration_struct *configuration)
 {
     if(neutronHandler) updateNeutrons(dt, configuration);
     if(fuelHandler) manageFuelAssemblyInteractions(configuration);
-    if(fuelHandler) manageFuelAssemblyFissions(dt,configuration);
-    if(neutronHandler) updateReactorCore(dt, configuration);
+    if(fuelHandler) updateFuelChannels(dt,configuration);
+    if(neutronHandler) createNewNeutrons(dt, configuration);
 }
 
 
+
+
 /**
+ * Second-level target for parallelism -- Main parallel target (geometric)
+ *
  * Update each neutron at the current timestep, moving its position based upon the velocity
- * components and energy, and then handling the collision of the neutron with a fuel channel,
- * moderator, or control rod
+ * components and energy, and then communicating with the fuel handler process for the respective
+ * interactiong, and finally handling the collision of the neutron with a moderator or control rod
  **/
 /*static*/ void updateNeutrons(int dt, struct simulation_configuration_struct *configuration)
 {
@@ -373,7 +132,236 @@ void sendGeneratedNeutrons(int initial_pellets)
 }
 
 
+
 /**
+ * Second-level non-parallelized function
+ *
+ * Perform the interaction between the neutrons and the fuel channels. Receive the interacting 
+ * neutrons (the ones that enter the fuel assembly) from each neutron handler, execute the interaction,
+ * and send back, so that neutron handler knows whether they were absorbed
+ **/
+void manageFuelAssemblyInteractions(struct simulation_configuration_struct *configuration)
+{
+
+    MPI_Status status;
+
+    int proc; // Process with which the interaction is happening
+    int buff_loc; // Displacement in the *neutrons array
+    int proc_buff_size = local_max_neutrons/(size-1); // How much of the *neutrons array in fuelHandler is allocated to each messaging process
+
+    int *received_messages = (int *) malloc(sizeof(int)*(size-1)); // Keep track of the messages received from each process
+    int total_received_messages = 0; // Keep track of the total
+
+    // Prepare to receive the messages from all the neutron handlers
+    for(int i=0; i<(size-1); i++)
+    {
+        proc = i+1;
+        buff_loc = i*proc_buff_size;
+
+        // Should be possible to change this so that a simpler struct than neutrons can be used in rank 0 (i.e. we only need .x, .y and .active)
+        MPI_Irecv(&neutrons[buff_loc],local_max_neutrons,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_recv_request[i]);
+        received_messages[i] = 0;
+    }
+
+    while( total_received_messages < num_rolling_msgs*(size-1) ) // Note: there should be exactly num_rolling * (size-1) messages to wait for
+    {
+        int i;
+        MPI_Waitany(size-1, neutrons_recv_request, &i , &status); // First come first serve
+        // If this is not the first interaction with that process, wait to make sure it received the last message
+        if(received_messages[i]>0) MPI_Wait(&neutrons_send_request[i],MPI_STATUS_IGNORE);
+
+        received_messages[i] ++;
+        total_received_messages ++;
+
+        int count;
+        MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count); // Get the count in order to know how many to send back
+
+        proc = i+1; // Assumes that fuelHandler is rank 0
+        buff_loc = i*proc_buff_size;
+
+
+        for(long int j=0; j<count; j++)
+        {
+            struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[buff_loc+j].pos_x, neutrons[buff_loc+j].pos_y, configuration);
+            interactWithFuelAssembly(&neutrons[buff_loc+j],reactorChannel,configuration,0);
+        }
+
+//        printf("Rank %d waiting to send to rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
+        // Send the neutrons back
+        MPI_Issend(&neutrons[buff_loc],count,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_send_request[i]);
+
+//        printf("Rank %d waiting to receive from rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
+        // If this is not the last message, prepare for the next one
+        if(received_messages[i]<num_rolling_msgs) MPI_Irecv(&neutrons[buff_loc],local_max_neutrons,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_recv_request[i]);
+
+    }
+
+}
+
+
+
+
+/**
+ * Second-level non-parallelized function
+ *
+ * Go over each fuel channel and update its state by executing all the fission events
+ *
+ **/
+void updateFuelChannels(int dt, struct simulation_configuration_struct *configuration)
+{
+    for (int i = 0; i < configuration->channels_x; i++)
+    {
+        for (int j = 0; j < configuration->channels_y; j++)
+        {
+            if (reactor_core[i][j].type == FUEL_ASSEMBLY)
+            {
+                executeFissions(dt,&(reactor_core[i][j]));
+            }
+        }
+    }
+}
+
+
+
+
+/**
+ * Second-level target for parallelism
+ *
+ * Go over the different channels and create all the new neutrons, both from fission in the fuel cells as well as
+ * from the generator
+ *
+ **/
+/*static*/ void createNewNeutrons(int dt, struct simulation_configuration_struct *configuration)
+{
+    for (int i = 0; i < configuration->channels_x; i++)
+    {
+        for (int j = 0; j < configuration->channels_y; j++)
+        {
+            if (reactor_core[i][j].type == FUEL_ASSEMBLY)
+            {
+                createNeutronsFromFission(&(reactor_core[i][j]));
+            }
+
+            if (reactor_core[i][j].type == NEUTRON_GENERATOR)
+            {
+                updateNeutronGenerator(dt, &(reactor_core[i][j]), configuration);
+            }
+        }
+    }
+}
+
+
+/**
+ * Third level
+ *
+ * Sends the neutrons that enter the fuel assembly to the fuel handler. It receives as parameters: the count (number of neutrons
+ * to send, and the message number (to allow for multiple messages of the same type to be sent simultaneously.
+ *
+ **/
+void sendFuelAssemblyNeutrons(int count, int msg_num)
+{
+
+    int starting_index = 0;
+    commit_sparse_neutrons_datatype(count,&MPI_SPARSE_NEUTRONS[msg_num]); // Note: might have to change this for rolling messages
+
+
+//    printf("Rank %d waiting to send to rank %d\n",rank,receiver);
+    MPI_Issend(&neutrons[0],1,MPI_SPARSE_NEUTRONS[msg_num], fuelHandlerProc, 0, world, &neutrons_send_request[msg_num]);
+    MPI_Irecv(&neutrons[0],1,MPI_SPARSE_NEUTRONS[msg_num],fuelHandlerProc,0,world,&neutrons_recv_request[msg_num]);
+}
+
+
+
+
+/**
+ *
+ * Handle the interaction of the neutron with a given reactor channel (function for profiling only)
+ *
+ **/
+void __attribute__ ((noinline)) interactWithReactor(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i) {
+
+    if (reactorChannel->type == MODERATOR)
+    {
+        interactWithModerator(neutron,reactorChannel,configuration,i);
+    }
+
+    if (reactorChannel->type == CONTROL_ROD)
+    {
+        interactWithControlRod(neutron,reactorChannel,configuration,i);
+    }
+
+}
+
+
+/**
+ * Third level
+ *
+ * Adds the new neutrons, obtained from fission in the fuel channels, into the *neutrons array
+ *
+ **/
+void createNeutronsFromFission(struct channel_struct *channel)
+{
+    MPI_Status status;
+    int count;
+
+    MPI_Recv(&fission_array[0],max_fission_events,MPI_FISSION_EVENT,fuelHandlerProc,0,world,&status); // Note: num_pellets on the neutron handler is not up-to-date, max_fission is needed
+    MPI_Get_count(&status,MPI_FISSION_EVENT,&count);
+
+    for(int i=0; i < count; i++)
+    {
+        createNeutrons(fission_array[i].generated_neutrons,channel,(fission_array[i].pellet_height * HEIGHT_FUEL_PELLET_M) + (HEIGHT_FUEL_PELLET_M / 2) );
+    }
+
+}
+
+
+
+/**
+ * Third-level
+ *
+ * Executes the fissions in the corresponding channel, keeping track of the amount of new neutrons from the event and their height
+ *
+ **/
+void executeFissions(int dt, struct channel_struct *channel)
+{
+
+    int initial_pellets = channel->contents.fuel_assembly.num_pellets;
+    unsigned long int fission_neutrons_counter;
+
+    for (int i = 0; i < initial_pellets; i++)
+    {
+        fission_neutrons_counter = 0;
+
+        unsigned long int num_u236 = (unsigned long int)channel->contents.fuel_assembly.quantities[i][U236];
+        for (unsigned long int j = 0; j < num_u236; j++)
+        {
+            int num_neutrons = fissionU236(channel, i);
+            channel->contents.fuel_assembly.num_fissions++;
+            fission_neutrons_counter+=num_neutrons;
+        }
+        unsigned long int num_pu240 = (unsigned long int)channel->contents.fuel_assembly.quantities[i][Pu240];
+        for (unsigned long int j = 0; j < num_pu240; j++)
+        {
+            int num_neutrons = fissionPu240(channel, i);
+            channel->contents.fuel_assembly.num_fissions++;
+            fission_neutrons_counter+=num_neutrons;
+        }
+
+        fission_array[i].generated_neutrons = fission_neutrons_counter;
+        fission_array[i].pellet_height = i;
+
+    }
+
+    sendFissionEvents(initial_pellets); // Note: this assumes global fission array
+
+}
+
+
+
+
+/**
+ * Third-level
+ *
  * Update the state of a neutron generator for a timestep, generating the required
  * number of neutrons
  **/
@@ -393,41 +381,58 @@ void sendGeneratedNeutrons(int initial_pellets)
 
 }
 
-void generateNeutrons(int dt, struct channel_struct *channel, struct simulation_configuration_struct *configuration)
+
+
+/**
+ *
+ * Executes the fissions in the corresponding channel, keeping track of the amount of new neutrons from the event and their height
+ *
+ **/
+void sendFissionEvents(int initial_pellets)
 {
 
-    int num_remotes = size-1;
-    unsigned long int *available_neutrons = (unsigned long int *) malloc(sizeof(unsigned long int)*size);
-    int temp = 0;
+    int num_receivers = size-1;
 
-    MPI_Gather(&temp,1,MPI_UNSIGNED_LONG,&available_neutrons,1,MPI_UNSIGNED_LONG,fuelHandlerProc,world);
+    int events_per_proc = initial_pellets/num_receivers;
+    int remainder = initial_pellets%num_receivers;
+    int displ;
 
-    unsigned long int number_new_neutrons = getNumberNeutronsFromGenerator(channel->contents.neutron_generator.weight, dt);
-    unsigned long int total_available = 0;
-    unsigned long int total_allocated = 0;
+    MPI_Status status;
 
-    for(int i=0; i<size; i++)
+    int start = 0;//rand(); // In order to distribute "fairly", but it seems to cause more problems than it solves
+
+
+    // Uses a strided array of fissions due to issues of numerical stability (so each process gets "uncorrelated" fission events)
+    commit_strided_fission_datatype(events_per_proc+1);
+
+    for(int i=0; i<remainder; i++) // Sends one event more to the first few processes, to account for the remainder of the division
     {
-        total_available += available_neutrons[i-1];
+        int proc = (start+i)%num_receivers+1;  // Note: assumes rank 0 is fuelHandler
+        MPI_Issend(&fission_array[i],1,MPI_STRIDED_FISSION,proc,0,world,&neutrons_send_request[i]);
     }
 
-    for(int i=0; i<size && total_available!=0; i++)
+    commit_strided_fission_datatype(events_per_proc);
+    for(int i=remainder; i<size-1; i++)
     {
-        available_neutrons[i-1] = (unsigned long int)( (double)(available_neutrons[i-1]) / total_available * number_new_neutrons);
-        total_allocated = available_neutrons[i-1];
+        int proc = (start+i)%num_receivers+1;
+        MPI_Issend(&fission_array[i],1,MPI_STRIDED_FISSION,proc,0,world,&neutrons_send_request[i]);
     }
 
-    available_neutrons[size-1] += number_new_neutrons - total_allocated; // Note: assumes last proc is not fuelHandler
-
-    MPI_Scatter(&available_neutrons,1,MPI_UNSIGNED_LONG,&temp,1,MPI_UNSIGNED_LONG,fuelHandlerProc,world);
-
-    free(available_neutrons);
+    // Wait for all to receive
+    for(int i=1; i<size; i++) // Note: this assumes fuelHandler = rank 0
+    {
+        MPI_Wait(&neutrons_send_request[i-1],&status);
+    }
 
 }
 
 
+
+
 /**
- * Calculates the number of currently active neutrons in the simulation
+ *
+ * Calculates the number of currently active neutrons handled by the process
+ *
  **/
 /*static*/ unsigned long int calculateNumberActiveNeutrons(struct simulation_configuration_struct *configuration)
 {
@@ -447,7 +452,9 @@ void generateNeutrons(int dt, struct channel_struct *channel, struct simulation_
 
 
 /**
- * Determines the number of currently active neutrons in the simulation
+ *
+ * Determines the number of currently active neutrons in the simulation. Accumulates the results from other processes
+ *
  **/
 /*static*/ unsigned long int getNumberActiveNeutrons(struct simulation_configuration_struct *configuration)
 {
@@ -460,25 +467,15 @@ void generateNeutrons(int dt, struct channel_struct *channel, struct simulation_
 }
 
 
-void __attribute__ ((noinline)) interactWithReactor(struct neutron_struct *neutron, struct channel_struct *reactorChannel, struct simulation_configuration_struct *configuration, long int i) {
-
-    if (reactorChannel->type == MODERATOR)
-    {
-        interactWithModerator(neutron,reactorChannel,configuration,i);
-    }
-
-    if (reactorChannel->type == CONTROL_ROD)
-    {
-        interactWithControlRod(neutron,reactorChannel,configuration,i);
-    }
-
-}
-
-/*
- * Parallelization-related functions
- */
 
 
+
+/**
+ *
+ * Commit a datatype consisting of neutrons separated by arbitrary distances (in the *neutrons array), in order to allow for
+ * messages consisting only of relevant neutrons
+ *
+ **/
 void commit_sparse_neutrons_datatype(int count, MPI_Datatype *sparse_neutrons)
 {
     MPI_Type_create_indexed_block(count,1,&fuel_assembly_neutrons_index[0],MPI_SIMPLE_NEUTRON,sparse_neutrons);
@@ -487,6 +484,12 @@ void commit_sparse_neutrons_datatype(int count, MPI_Datatype *sparse_neutrons)
 
 
 
+/**
+ *
+ * Commit a datatype consisting of fission events that are strided by a particular amount (so that each process receives an
+ * uncorrelated package of fission events.
+ *
+ **/
 void commit_strided_fission_datatype(int count)
 {
     MPI_Type_vector(count,1,(size-1),MPI_FISSION_EVENT,&MPI_STRIDED_FISSION);
@@ -495,6 +498,11 @@ void commit_strided_fission_datatype(int count)
 
 
 
+/**
+ *
+ * Commit a datatype representing a single neutron struct
+ *
+ **/
 void commit_simple_neutron_datatype()
 {
     // Define block_lengths array.
@@ -532,6 +540,12 @@ void commit_simple_neutron_datatype()
 
 }
 
+
+/**
+ *
+ * Commit a datatype representing a fission event struct
+ *
+ **/
 void commit_fission_event_datatype()
 {
     // Define block_lengths array.
@@ -564,13 +578,17 @@ void commit_fission_event_datatype()
     // Commit the MPI datatype.
     MPI_Type_commit(&MPI_FISSION_EVENT);
 
-//    commit_strided_fission_datatype();
-
 }
 
 
-
-// Ideally there would be multiple functions for different datatypes
+/**
+ *
+ * General purpose function for parallel applications: re-scales quantities that should be "distributed" among processes (i.e.
+ * scaled inversely. Receives an unsigned long int (number) and rescales it according to how many processes should share that
+ * quantity (that is, exclude processes which aren't involved). Also allows to ask for the highest value returned or the total
+ * quantity (useful for master-process patterns).
+ *
+ **/
 unsigned long int parallel_rescale_inv(unsigned long int number, int num_ignored_processes, bool get_highest, bool get_total)
 {
     if(get_total) return number;
@@ -585,62 +603,3 @@ unsigned long int parallel_rescale_inv(unsigned long int number, int num_ignored
 
 }
 
-
-
-
-void sendFuelAssemblyNeutrons(int count, int msg_num)
-{
-
-    int starting_index = 0;
-    commit_sparse_neutrons_datatype(count,&MPI_SPARSE_NEUTRONS[msg_num]); // Note: might have to change this for rolling messages
-
-
-//    printf("Rank %d waiting to send to rank %d\n",rank,receiver);
-    MPI_Issend(&neutrons[0],1,MPI_SPARSE_NEUTRONS[msg_num], fuelHandlerProc, 0, world, &neutrons_send_request[msg_num]);
-    MPI_Irecv(&neutrons[0],1,MPI_SPARSE_NEUTRONS[msg_num],fuelHandlerProc,0,world,&neutrons_recv_request[msg_num]);
-}
-
-
-
-
-
-void manageFuelAssemblyFissions(int dt, struct simulation_configuration_struct *configuration)
-{
-    for (int i = 0; i < configuration->channels_x; i++)
-    {
-        for (int j = 0; j < configuration->channels_y; j++)
-        {
-            if (reactor_core[i][j].type == FUEL_ASSEMBLY)
-            {
-                executeFissions(dt,&(reactor_core[i][j]));
-//                updateFuelAssembly(dt,&reactor_core[i][j]);
-            }
-        }
-    }
-}
-
-
-
-/**
- * Update the state of the reactor core at the current timestep, which will update the state
- * of each fuel assembly and neutron generator.
- **/
-/*static*/ void updateReactorCore(int dt, struct simulation_configuration_struct *configuration)
-{
-    for (int i = 0; i < configuration->channels_x; i++)
-    {
-        for (int j = 0; j < configuration->channels_y; j++)
-        {
-            if (reactor_core[i][j].type == FUEL_ASSEMBLY)
-            {
-                createNeutronsFromFission(&(reactor_core[i][j]));
-//                createNeutronsFromFission_new(&(reactor_core[i][j]));
-            }
-
-            if (reactor_core[i][j].type == NEUTRON_GENERATOR)
-            {
-                updateNeutronGenerator(dt, &(reactor_core[i][j]), configuration);
-            }
-        }
-    }
-}
