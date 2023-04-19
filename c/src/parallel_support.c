@@ -59,34 +59,150 @@ void manageFuelAssemblyInteractions(struct simulation_configuration_struct *conf
     int buff_loc;
     int proc_buff_size = local_max_neutrons/(size-1);
 
+    int *received_messages = (int *) malloc(sizeof(int)*(size-1));
+    int total_received_messages = 0;
 
-    for(int msg_num = 0; msg_num < num_rolling_msgs; msg_num++) // Note: there should be exactly num_rolling * (size-1) messages to wait for
+    for(int i=0; i<(size-1); i++)
     {
-        for(int i=0; i<(size-1); i++)
-        {
-
-            int count;
-            proc = i+1;
-            buff_loc = i*proc_buff_size;
-//            buff_loc = 0;
-//            printf("Rank %d waiting to receive from rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
-            MPI_Irecv(&neutrons[buff_loc],local_max_neutrons,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_recv_request[i]); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
-            MPI_Wait(&neutrons_recv_request[i],&status);
-
-            MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
-
-            for(long int j=0; j<count; j++)
-            {
-                struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[buff_loc+j].pos_x, neutrons[buff_loc+j].pos_y, configuration);
-                interactWithFuelAssembly(&neutrons[buff_loc+j],reactorChannel,configuration,0);
-            }
-
-//            printf("Rank %d waiting to send to rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
-            MPI_Issend(&neutrons[buff_loc],count,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_send_request[i]);
-            MPI_Wait(&neutrons_send_request[i],&status);
-        }
+        proc = i+1;
+        buff_loc = i*proc_buff_size;
+        MPI_Irecv(&neutrons[buff_loc],local_max_neutrons,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_recv_request[i]); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
+        received_messages[i] = 0;
     }
+
+    while( total_received_messages < num_rolling_msgs*(size-1) ) // Note: there should be exactly num_rolling * (size-1) messages to wait for
+    {
+
+        int i;
+        MPI_Waitany(size-1,neutrons_recv_request,&i,&status);
+        if(received_messages[i]>0) MPI_Wait(&neutrons_send_request[i],MPI_STATUS_IGNORE);
+
+        received_messages[i] ++;
+        total_received_messages ++;
+
+        int count;
+        MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
+
+        proc = i+1;
+        buff_loc = i*proc_buff_size;
+
+
+        for(long int j=0; j<count; j++)
+        {
+            struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[buff_loc+j].pos_x, neutrons[buff_loc+j].pos_y, configuration);
+            interactWithFuelAssembly(&neutrons[buff_loc+j],reactorChannel,configuration,0);
+        }
+
+//        printf("Rank %d waiting to send to rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
+        MPI_Issend(&neutrons[buff_loc],count,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_send_request[i]);
+//        MPI_Wait(&neutrons_send_request[i],&status);
+
+
+//        printf("Rank %d waiting to receive from rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
+        if(received_messages[i]<num_rolling_msgs) MPI_Irecv(&neutrons[buff_loc],local_max_neutrons,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_recv_request[i]); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
+//        MPI_Wait(&neutrons_recv_request[i],&status);
+
+    }
+
 }
+
+
+//void manageFuelAssemblyInteractions(struct simulation_configuration_struct *configuration)
+//{
+//
+//    MPI_Status status;
+//
+//    int proc;
+//    int buff_loc;
+//    int proc_buff_size = local_max_neutrons/(size-1);
+//
+//    int *received_messages = (int *) malloc(sizeof(int)*(size-1));
+//    int total_received_messages = 0;
+//
+//    for(int i=0; i<(size-1); i++)
+//    {
+//        proc = i+1;
+//        buff_loc = i*proc_buff_size;
+//        MPI_Irecv(&neutrons[buff_loc],local_max_neutrons,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_recv_request[i]); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
+//        received_messages[i] = 0;
+//    }
+//
+//    while( total_received_messages < num_rolling_msgs*(size-1) ) // Note: there should be exactly num_rolling * (size-1) messages to wait for
+//    {
+//        int received = 0;
+//        for(int i=0; i<(size-1); i++)
+//        {
+//          MPI_Test(&neutrons_recv_request[i],&received,&status);
+//          if(received)
+//          {
+//
+//            received_messages[i] ++;
+//            total_received_messages ++;
+//
+//            int count;
+//            MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
+//
+//            proc = i+1;
+//            buff_loc = i*proc_buff_size;
+//
+//
+//            for(long int j=0; j<count; j++)
+//            {
+//                struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[buff_loc+j].pos_x, neutrons[buff_loc+j].pos_y, configuration);
+//                interactWithFuelAssembly(&neutrons[buff_loc+j],reactorChannel,configuration,0);
+//            }
+//
+////            printf("Rank %d waiting to send to rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
+//            MPI_Issend(&neutrons[buff_loc],count,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_send_request[i]);
+////            MPI_Wait(&neutrons_send_request[i],&status);
+//
+//
+////            printf("Rank %d waiting to receive from rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
+//            if(received_messages[i]<num_rolling_msgs) MPI_Irecv(&neutrons[buff_loc],local_max_neutrons,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_recv_request[i]); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
+////            MPI_Wait(&neutrons_recv_request[i],&status);
+//
+//          }
+//        }
+//    }
+//}
+
+
+//void manageFuelAssemblyInteractions(struct simulation_configuration_struct *configuration)
+//{
+//
+//    MPI_Status status;
+//
+//    int proc;
+//    int buff_loc;
+//    int proc_buff_size = local_max_neutrons/(size-1);
+//
+//
+//    for(int msg_num = 0; msg_num < num_rolling_msgs; msg_num++) // Note: there should be exactly num_rolling * (size-1) messages to wait for
+//    {
+//        for(int i=0; i<(size-1); i++)
+//        {
+//
+//            int count;
+//            proc = i+1;
+//            buff_loc = i*proc_buff_size;
+////            printf("Rank %d waiting to receive from rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
+//            MPI_Irecv(&neutrons[buff_loc],local_max_neutrons,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_recv_request[i]); //Note: Need to change this so that I can use a simpler struct than neutrons in rank 0
+//            MPI_Wait(&neutrons_recv_request[i],&status);
+//
+//            MPI_Get_count(&status,MPI_SIMPLE_NEUTRON,&count);
+//
+//            for(long int j=0; j<count; j++)
+//            {
+//                struct channel_struct *reactorChannel = locateChannelFromPosition(neutrons[buff_loc+j].pos_x, neutrons[buff_loc+j].pos_y, configuration);
+//                interactWithFuelAssembly(&neutrons[buff_loc+j],reactorChannel,configuration,0);
+//            }
+//
+////            printf("Rank %d waiting to send to rank %d in manageFuelAssembly, message %d\n",rank,i,msg_num);
+//            MPI_Issend(&neutrons[buff_loc],count,MPI_SIMPLE_NEUTRON,proc,0,world,&neutrons_send_request[i]);
+//            MPI_Wait(&neutrons_send_request[i],&status);
+//        }
+//    }
+//}
 
 void createNeutronsFromFission(struct channel_struct *channel)
 {
@@ -152,7 +268,6 @@ void sendGeneratedNeutrons(int initial_pellets)
     int displ;
 
     MPI_Status status;
-//    MPI_Request *temp_requests = (MPI_Request *) malloc(sizeof(MPI_Request)*num_receivers);
 
     int start = 0;//rand(); // In order to distribute "fairly", but it seems to cause more problems than it solves
 
@@ -176,8 +291,6 @@ void sendGeneratedNeutrons(int initial_pellets)
     {
         MPI_Wait(&neutrons_send_request[i-1],&status);
     }
-
-//    free(temp_requests);
 
 }
 
