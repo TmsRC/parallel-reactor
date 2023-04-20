@@ -5,8 +5,8 @@
 #SBATCH --exclusive
 
 #SBATCH --time=02:00:00
-# SBATCH --nodes=2
-# SBATCH --tasks-per-node=36
+#SBATCH --nodes=2
+#SBATCH --tasks-per-node=36
 #SBATCH --qos=standard
 # SBATCH --reservation=shortqos
 
@@ -35,7 +35,7 @@ for i in {0..8}
 do
     for j in {1..3}
     do
-      srun --unbuffered --distribution=block:block --hint=nomultithread --nodes=${NODES[i]} --ntasks=${NPROCS[i]} ./reactor config_lean.txt reactorState.out >> strong_scaling.out
+      srun --unbuffered --distribution=block:block --hint=nomultithread --nodes=${NODES[i]} --ntasks=${NPROCS[i]} ./reactor config_simple.txt reactorState.out >> strong_scaling.out
     done
 done
 

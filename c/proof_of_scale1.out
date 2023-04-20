@@ -1,0 +1,17 @@
+Simulation configured for reactor core of size 1m by 1m by 1m, timesteps=2000 dt=10ns
+------------------------------------------------------------------------------------------------
+Timestep: 200, model time is 2.000000e-06 secs, current runtime is 24.92 seconds. 50000000 active neutrons, 729222 fissions, releasing 1.458444e+08 MeV and 2.333510e-05 Joules
+Timestep: 400, model time is 4.000000e-06 secs, current runtime is 49.86 seconds. 50000000 active neutrons, 1106620 fissions, releasing 2.213240e+08 MeV and 3.541184e-05 Joules
+Timestep: 600, model time is 6.000000e-06 secs, current runtime is 74.72 seconds. 50000000 active neutrons, 1476666 fissions, releasing 2.953332e+08 MeV and 4.725331e-05 Joules
+Timestep: 800, model time is 8.000000e-06 secs, current runtime is 99.32 seconds. 50000000 active neutrons, 1842891 fissions, releasing 3.685782e+08 MeV and 5.897251e-05 Joules
+Timestep: 1000, model time is 1.000000e-05 secs, current runtime is 123.78 seconds. 50000000 active neutrons, 2205822 fissions, releasing 4.411644e+08 MeV and 7.058630e-05 Joules
+Timestep: 1200, model time is 1.200000e-05 secs, current runtime is 148.03 seconds. 50000000 active neutrons, 2565558 fissions, releasing 5.131116e+08 MeV and 8.209786e-05 Joules
+Timestep: 1400, model time is 1.400000e-05 secs, current runtime is 172.10 seconds. 50000000 active neutrons, 2923820 fissions, releasing 5.847640e+08 MeV and 9.356224e-05 Joules
+Timestep: 1600, model time is 1.600000e-05 secs, current runtime is 196.02 seconds. 50000000 active neutrons, 3277723 fissions, releasing 6.555446e+08 MeV and 1.048871e-04 Joules
+Timestep: 1800, model time is 1.800000e-05 secs, current runtime is 219.75 seconds. 50000000 active neutrons, 3631033 fissions, releasing 7.262066e+08 MeV and 1.161931e-04 Joules
+------------------------------------------------------------------------------------------------
+Model completed after 2000 timesteps
+Total model time: 0.000020 secs
+Total fissions: 3978463 releasing 7.956926e+08 MeV and 1.273108e-04 Joules
+Total runtime: 243.23 seconds
+144 243.23180

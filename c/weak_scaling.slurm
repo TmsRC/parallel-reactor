@@ -5,7 +5,7 @@
 #SBATCH --exclusive
 
 #SBATCH --time=02:00:00
-#SBATCH --nodes=2
+#SBATCH --nodes=1
 #SBATCH --tasks-per-node=36
 #SBATCH --qos=standard
 # SBATCH --reservation=shortqos
