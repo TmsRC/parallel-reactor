@@ -88,9 +88,9 @@ int main(int argc, char *argv[])
 
     // Empty the file we will use to store the reactor state
     clearReactorStateFile(argv[2]);
-    if(fuelHandler || serial) printf("Simulation configured for reactor core of size %dm by %dm by %dm, timesteps=%d dt=%dns\n", configuration.size_x,
-                       configuration.size_y, configuration.size_z, configuration.num_timesteps, configuration.dt);
-    if(fuelHandler || serial) printf("------------------------------------------------------------------------------------------------\n");
+//    if(fuelHandler || serial) printf("Simulation configured for reactor core of size %dm by %dm by %dm, timesteps=%d dt=%dns\n", configuration.size_x,
+//                       configuration.size_y, configuration.size_z, configuration.num_timesteps, configuration.dt);
+//    if(fuelHandler || serial) printf("------------------------------------------------------------------------------------------------\n");
     gettimeofday(&start_time, NULL); // Record simulation start time (for runtime statistics)
 
 //    printf("Max int: %d. Num neutrons: %ld ",INT_MAX,configuration.max_neutrons);
@@ -102,13 +102,13 @@ int main(int argc, char *argv[])
 
         if (i > 0 && i % configuration.display_progess_frequency == 0)
         {
-            if(neutronHandler) calculateNumberActiveNeutrons(&configuration);
-            if(fuelHandler) generateReport(configuration.dt, i, &configuration, start_time);
+//            if(neutronHandler) calculateNumberActiveNeutrons(&configuration);
+//            if(fuelHandler) generateReport(configuration.dt, i, &configuration, start_time);
         }
 
         if (i > 0 && i % configuration.write_reactor_state_frequency == 0)
         {
-            if(fuelHandler) writeReactorState(&configuration, i, argv[2]);
+//            if(fuelHandler) writeReactorState(&configuration, i, argv[2]);
         }
 
     }
@@ -117,9 +117,11 @@ int main(int argc, char *argv[])
     unsigned long int num_fissions = getTotalNumberFissions(&configuration);
     double mev = getMeVFromFissions(num_fissions);
     double joules = getJoulesFromMeV(mev);
-    if(fuelHandler || serial) printf("------------------------------------------------------------------------------------------------\n");
-    if(fuelHandler || serial) printf("Model completed after %d timesteps\nTotal model time: %f secs\nTotal fissions: %ld releasing %e MeV and %e Joules\nTotal runtime: %.2f seconds\n",
-                       configuration.num_timesteps, (NS_AS_SEC * configuration.dt) * configuration.num_timesteps, num_fissions, mev, joules, getElapsedTime(start_time));
+//    if(fuelHandler || serial) printf("------------------------------------------------------------------------------------------------\n");
+//    if(fuelHandler || serial) printf("Model completed after %d timesteps\nTotal model time: %f secs\nTotal fissions: %ld releasing %e MeV and %e Joules\nTotal runtime: %.2f seconds\n",
+//                       configuration.num_timesteps, (NS_AS_SEC * configuration.dt) * configuration.num_timesteps, num_fissions, mev, joules, getElapsedTime(start_time));
+
+    if(fuelHandler || serial) printf("%d %.5f\n",size,getElapsedTime(start_time));
 
     MPI_Finalize();
 

@@ -4,3 +4,6 @@ reactor
 core
 c/profile.*
 c/vtune*
+c/scaling.*
+c/*scaling1*
+c/*scaling2*
