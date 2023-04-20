@@ -1,0 +1,12 @@
+Simulation configured for reactor core of size 1m by 1m by 1m, timesteps=100 dt=10ns
+------------------------------------------------------------------------------------------------
+Timestep: 20, model time is 2.000000e-07 secs, current runtime is 18.51 seconds. 219792486 active neutrons, 53683 fissions, releasing 1.073660e+07 MeV and 1.717856e-06 Joules
+Timestep: 40, model time is 4.000000e-07 secs, current runtime is 42.09 seconds. 422385497 active neutrons, 208320 fissions, releasing 4.166400e+07 MeV and 6.666240e-06 Joules
+Timestep: 60, model time is 6.000000e-07 secs, current runtime is 71.23 seconds. 624639615 active neutrons, 411166 fissions, releasing 8.223320e+07 MeV and 1.315731e-05 Joules
+Timestep: 80, model time is 8.000000e-07 secs, current runtime is 103.52 seconds. 826740264 active neutrons, 647415 fissions, releasing 1.294830e+08 MeV and 2.071728e-05 Joules
+------------------------------------------------------------------------------------------------
+Model completed after 100 timesteps
+Total model time: 0.000001 secs
+Total fissions: 891026 releasing 1.782052e+08 MeV and 2.851283e-05 Joules
+Total runtime: 136.52 seconds
+144 136.52158

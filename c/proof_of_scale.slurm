@@ -4,7 +4,7 @@
 #SBATCH --partition=standard
 #SBATCH --exclusive
 
-#SBATCH --time=02:00:00
+#SBATCH --time=00:05:00
 #SBATCH --nodes=4
 #SBATCH --tasks-per-node=36
 #SBATCH --qos=standard
